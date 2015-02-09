@@ -1,0 +1,17 @@
+#
+# .gitattributes
+#
+# * default is to translate if git thinks this is a text file
+# *.txt is always text
+# *.sh is always LF
+# *.jpg is always binary - no translation
+# *.png is always binary - no translation
+# *.pdf is always binary - no translation
+#
+*		text=auto
+*.txt           text
+*.sh            eol=lf
+*.jpg           -text
+*.png		-text
+*.pdf		-text
+
