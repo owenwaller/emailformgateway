@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<head>
+<title>
+PaceSafe.com Contact Us Form - {{ .Customer.Subject }}
+</title>
+</head>
+<body>
+The following email has been received by the contact us page of
+the PaceSafe.com website.
+<br>
+Please read and respond to it as required.
+<br>
+The FormProcessor
+<br>
+<br>
+From: {{ .Customer.CustomerName }} &lt;{{ .Customer.Email }}&gt;
+<br>
+Company: {{ .Customer.Company }}
+<br>
+Telephone: {{ .Customer.Phone }}
+<br>
+Subject: {{ .Customer.Subject }}
+<br>
+<br>
+{{ .Customer.Message }}
+<br>
+Technical Information
+<br>
+<br>
+User-Agent: {{ .UserAgent }}
+<br>
+Sender IP Address: {{ .RemoteIp }}
+</body>

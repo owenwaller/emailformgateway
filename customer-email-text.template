@@ -1,0 +1,21 @@
+Dear {{ .CustomerName }},
+
+Thank you for contacting PaceSafe.
+
+A member of the team will be in touch with you over the 
+next few days to discuss your query in more detail.
+
+This email address is not monitored so, please do not reply to this email.
+
+The team at PaceSafe.
+
+Your original message follows:
+
+----------------------------------
+From: {{ .CustomerName }} <{{ .Email }}>
+Company: {{ .Company }}
+Telephone: {{ .Phone }}
+Subject: {{ .Subject }}
+------
+{{ .Message }}
+
