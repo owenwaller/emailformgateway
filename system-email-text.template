@@ -1,20 +1,12 @@
-The following email has been received by the contact us page of 
-the PaceSafe.com website.
-
+The following feedback has been received via the feedback form.
 Please read and respond to it as required.
 
-The FormProcessor
+The email form gateway
 
-----------------------------------
-From: {{ .CustomerName }} <{{ .Email }}>
-Company: {{ .Company }}
-Telephone: {{ .Phone }}
-Subject: {{ .Subject }}
-------
-{{ .Message }}
 
-Technical Information
----------------------
+From: {{ .FormData.Name }} &lt;{{ .FormData.Email }}&gt;
+Subject: {{ .FormData.Subject }}
 User-Agent: {{ .UserAgent }}
-Sender IP Address: {{ .RemoteIp %]
-
+Raw remote IP Address: {{ .RemoteIp }}
+X-Forwarded-For Header:{{ .XForwardedFor }}
+{{ .FormData.Feedback }}

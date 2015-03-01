@@ -46,11 +46,15 @@ type EmailSubjectData struct {
 }
 
 type EmailTemplatesData struct {
-	Dir          string
-	CustomerText string
-	CustomerHtml string
-	SystemText   string
-	SystemHtml   string
+	Dir                  string
+	CustomerText         string
+	CustomerHtml         string
+	SystemText           string
+	SystemHtml           string
+	CustomerTextFileName string
+	CustomerHtmlFileName string
+	SystemTextFileName   string
+	SystemHtmlFileName   string
 }
 
 type FieldData struct {
@@ -59,8 +63,8 @@ type FieldData struct {
 }
 
 type EmailTemplateData struct {
-	Name     string
-	Email    string
-	Subject  string
-	Feedback string
+	FormData      map[string]string
+	UserAgent     string
+	RemoteIp      string
+	XForwardedFor string
 }

@@ -59,6 +59,11 @@ func gatewayHandler(w http.ResponseWriter, r *http.Request) {
 
 	scrubFields(fields, &fr)
 	writeResponse(w, &fr)
+
+	//	var etd config.EmailTempalteData
+	//	etd.FormData = emailer.CreateFormDataMap(fields)
+	// need to add in the user agent, remote IP and XForwardedFor IP
+	//	emailer.SendEmail(etd, config.Smpt, config.Address, config.Subjects, config.Templates)
 }
 
 func scrubFields(fields []Field, fr *formResponse) {

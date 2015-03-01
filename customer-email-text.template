@@ -1,21 +1,13 @@
-Dear {{ .CustomerName }},
+Dear {{ .FormData.Name }},
 
-Thank you for contacting PaceSafe.
+Thank you for your feedback.
 
-A member of the team will be in touch with you over the 
-next few days to discuss your query in more detail.
+A member of the team will look at your feedback over the next couple of days.
+If necessary, they will contact you directly to dicuss your feedback in more detail.
+
+Once again thank you for contacting us. We really do appreciate your feedback.
+
+The Website Team
+
 
 This email address is not monitored so, please do not reply to this email.
-
-The team at PaceSafe.
-
-Your original message follows:
-
-----------------------------------
-From: {{ .CustomerName }} <{{ .Email }}>
-Company: {{ .Company }}
-Telephone: {{ .Phone }}
-Subject: {{ .Subject }}
-------
-{{ .Message }}
-

@@ -10,6 +10,32 @@ import (
 	"github.com/spf13/viper"
 )
 
+type ConfigReadError struct {
+	msg string
+	err string
+}
+
+type ConfigMarshalError struct {
+	msg string
+	err string
+}
+
+func NewConfigReadError(msg string, err string) ConfigReadError {
+	return ConfigReadError{msg, err}
+}
+
+func (e ConfigReadError) Error() string {
+	return fmt.Sprintf("%s, %s", e.msg, e.err)
+}
+
+func NewConfigMarshalError(msg string, err string) ConfigMarshalError {
+	return ConfigMarshalError{msg, err}
+}
+
+func (e ConfigMarshalError) Error() string {
+	return fmt.Sprintf("%s, %s", e.msg, e.err)
+}
+
 const (
 	DefaultConfigFilename = "config"
 )
@@ -33,37 +59,49 @@ func init() {
 
 func rootCmd(cmd *cobra.Command, args []string) {
 	fmt.Printf("Config value = \"%s\"\n", configFilename)
-	setConfigFile(configFilename)
-	err := viper.ReadInConfig()
+	err := ReadConfig(configFilename, &config)
 	if err != nil {
-		fmt.Printf("Could not read in config. Error \"%s\"\n", err)
+		fmt.Printf("%v\n", err)
 		os.Exit(-1)
 	}
-
-	fmt.Printf("All Keys: \"%#v\"\n", viper.AllKeys())
-	err = viper.Marshal(&config)
-	if err != nil {
-		fmt.Printf("Failed to marshal config. Error: \"%s\"\n", err)
-		os.Exit(-1)
-	}
-
 	server.Start(&config)
 	//viper.Debug()
 }
 
-func setConfigFile(configFilename string) {
+func setConfigFile(configFilename string) error {
 	if configFilename == "" {
 		configFilename = DefaultConfigFilename
 		// viper automatically searches the CWD - see findConfigFile
+		// need to make the path work on Windows
 		viper.AddConfigPath("/etc/emailformgateway/")
 		viper.SetConfigName(configFilename)
 	} else {
 		// check of the file exists
 		_, err := os.Lstat(configFilename)
 		if err != nil {
-			fmt.Printf("Error: %s\n", err)
-			os.Exit(-1)
+			return err // this will be of type os.PathError
 		}
 		viper.SetConfigFile(configFilename)
 	}
+	return nil
+}
+
+func ReadConfig(filename string, c *conf.Config) error {
+	err := setConfigFile(filename)
+	if err != nil {
+		return err // returns an os.PathError
+	}
+	err = viper.ReadInConfig()
+	if err != nil {
+		re := NewConfigReadError("Could not read in config.", err.Error())
+		return re
+	}
+
+	fmt.Printf("All Keys: \"%#v\"\n", viper.AllKeys())
+	err = viper.Marshal(c)
+	if err != nil {
+		me := NewConfigMarshalError("Failed to marshal config.", err.Error())
+		return me
+	}
+	return err // will be nil
 }
