@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
-	"net/mail"
 	"strconv"
 	"strings"
 
 	"github.com/owenwaller/cors"
 	conf "github.com/owenwaller/emailformgateway/config"
+	"github.com/owenwaller/emailformgateway/emailer"
 	"github.com/owenwaller/emailformgateway/validation"
 )
 
@@ -25,10 +26,7 @@ type formResponse struct {
 	BadFields []string
 }
 
-var c *conf.Config
-
 func Start(c *conf.Config) {
-	config(c)
 	fmt.Println("Creating new serve mux")
 	corsMux := cors.NewServeMux()
 	fmt.Printf("Registering %s => errorHandler\n", c.Server.Path)
@@ -38,13 +36,9 @@ func Start(c *conf.Config) {
 	http.ListenAndServe(host, corsMux)
 }
 
-func config(config *conf.Config) {
-	c = config
-}
-
 func gatewayHandler(w http.ResponseWriter, r *http.Request) {
 	// the formResponse must be local - the handler runs in its own go routine
-	// and we cannot share the form respnse across different requests.
+	// and we cannot share the form response across different requests.
 	var fr formResponse
 	// read the json and print it
 	body, err := ioutil.ReadAll(r.Body)
@@ -60,15 +54,32 @@ func gatewayHandler(w http.ResponseWriter, r *http.Request) {
 	scrubFields(fields, &fr)
 	writeResponse(w, &fr)
 
-	//	var etd config.EmailTempalteData
-	//	etd.FormData = emailer.CreateFormDataMap(fields)
+	fmt.Printf("GetConfig()\n")
+	var c = conf.GetConfig()
+	var etd conf.EmailTemplateData
+	fmt.Printf("createFormDataMap()\n")
+	etd.FormData = createFormDataMap(fields)
+	fmt.Printf("SplitHostPort()\n")
+	var ip, _, _ = net.SplitHostPort(r.RemoteAddr)
+	fmt.Printf("r.Header.Get()\n")
+	var xForwardedFor = r.Header.Get("X-FORWARDED-FOR")
+	fmt.Printf("r.UserAgent()\n")
+	var ua = r.UserAgent()
+	etd.UserAgent = ua
+	etd.RemoteIp = ip
+	etd.XForwardedFor = xForwardedFor
+	fmt.Printf("SendEmail()\n")
+	fmt.Printf("%v\n", c)
+	fmt.Printf("%v\n", etd)
 	// need to add in the user agent, remote IP and XForwardedFor IP
-	//	emailer.SendEmail(etd, config.Smpt, config.Address, config.Subjects, config.Templates)
+	emailer.SendEmail(etd, c.Smtp, c.Addresses, c.Subjects, c.Templates)
+	fmt.Printf("SENT!\n")
 }
 
 func scrubFields(fields []Field, fr *formResponse) {
 	fmt.Printf("formResponse.Valid=%v\n", fr.Valid)
 	// look in the config to see what fields we should expect
+	var c = conf.GetConfig()
 	for _, v := range c.Fields {
 		// find the type of the fields in the fields map we were sent that has the same name
 		match, err := find(v.Name, fields)
@@ -97,41 +108,23 @@ func validateField(match *Field, requiredType string, fr *formResponse) {
 	match.Value = strings.TrimSpace(match.Value)
 	match.Value = validation.RemoveEmailHeaders(match.Value)
 	match.Value = validation.RemoveScriptTagsAndContents(match.Value)
+	match.Value = validation.EscapeHTML(match.Value)
 	valid := false
 	requiredType = strings.ToLower(requiredType)
 	switch requiredType {
 	case "email":
-		valid = validateAsEmail(match.Value)
+		valid = validation.ValidateAsEmail(match.Value)
 	case "textrestricted":
-		valid = validateAsRestrictedText(match.Value)
+		valid = validation.ValidateAsRestrictedText(match.Value)
 	case "textunrestricted":
-		valid = validateAsUnrestrictedText(match.Value)
+		valid = validation.ValidateAsUnrestrictedText(match.Value)
 	default:
 		fmt.Printf("Unknown imput type: \"%s\"\n", requiredType)
 	}
+
 	if !valid {
 		fr.setBadFields(match)
 	}
-}
-
-func validateAsEmail(s string) bool {
-	//	match.Value = "Mr Blah Blah <" + match.Value + ">"
-	_, err := mail.ParseAddress(s)
-	if err != nil {
-		fmt.Printf("Could not parse email address \"%s\".Error: %s\n", s, err)
-		return false
-	}
-	return true
-}
-
-func validateAsRestrictedText(s string) bool {
-	var accept = validation.AcceptUnicodeLettersSpacesPunctuation(s)
-	return accept
-}
-
-func validateAsUnrestrictedText(s string) bool {
-	var accept = validation.AcceptAllUnicodeExceptControl(s)
-	return accept
 }
 
 func writeResponse(w http.ResponseWriter, fr *formResponse) {
@@ -148,6 +141,16 @@ func writeResponse(w http.ResponseWriter, fr *formResponse) {
 	}
 	// wipe the bad
 	fr.clearBadFields()
+}
+
+func createFormDataMap(formFields []Field) map[string]string {
+	// now print the fields
+	var m map[string]string
+	m = make(map[string]string)
+	for _, v := range formFields {
+		m[strings.Title(v.Name)] = v.Value
+	}
+	return m
 }
 
 func (fr *formResponse) setBadFields(match *Field) {

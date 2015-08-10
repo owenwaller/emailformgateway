@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/owenwaller/emailformgateway/commands"
 	"github.com/owenwaller/emailformgateway/config"
 )
 
@@ -13,14 +12,14 @@ func TestFullPathToTemplates(t *testing.T) {
 	var dir = "Templates" + osSep + "Email" + osSep
 	var filename = "customer-email.txt"
 	var expected = "Templates" + osSep + "Email" + osSep + "customer-email.txt"
-	var result = buildTemplateFilename(dir, filename)
+	var result = config.BuildTemplateFilename(dir, filename)
 
 	if result != expected {
 		t.Fatalf("Did not not get the expected full path filename of the template. Expected %v but got %v\n", expected, result)
 	}
 
 	dir = "Templates" + osSep + "Email"
-	result = buildTemplateFilename(dir, filename)
+	result = config.BuildTemplateFilename(dir, filename)
 
 	if result != expected {
 		t.Fatalf("Did not get the expected full path filename of the template. Expected %v but got %v\n", expected, result)
@@ -66,16 +65,16 @@ func TestSendEmail(t *testing.T) {
 	if filename == "" {
 		t.Fatalf("Required enviromental variable \"TEST_CONFIG_FILE\" not set.\nIt should be the absolute path of the config file.")
 	}
-	err := commands.ReadConfig(filename, &c)
+	err := config.ReadConfig(filename, &c)
 	if err != nil {
 		t.Fatalf("unexpected error reading config %v\n", err)
 	}
 
 	// first get all the templates
-	c.Templates.CustomerTextFileName = buildTemplateFilename(c.Templates.Dir, c.Templates.CustomerText)
-	c.Templates.CustomerHtmlFileName = buildTemplateFilename(c.Templates.Dir, c.Templates.CustomerHtml)
-	c.Templates.SystemTextFileName = buildTemplateFilename(c.Templates.Dir, c.Templates.SystemText)
-	c.Templates.SystemHtmlFileName = buildTemplateFilename(c.Templates.Dir, c.Templates.SystemHtml)
+	c.Templates.CustomerTextFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.CustomerText)
+	c.Templates.CustomerHtmlFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.CustomerHtml)
+	c.Templates.SystemTextFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.SystemText)
+	c.Templates.SystemHtmlFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.SystemHtml)
 
 	var expectedCtt = "/home/owen/go/src/github.com/owenwaller/emailformgateway/customer-email-text.template"
 	var expectedCht = "/home/owen/go/src/github.com/owenwaller/emailformgateway/customer-email-html.template"

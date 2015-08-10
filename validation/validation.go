@@ -1,6 +1,11 @@
 package validation
 
-import "regexp"
+import (
+	"fmt"
+	"html/template"
+	"net/mail"
+	"regexp"
+)
 
 const (
 	Control     = 'C'
@@ -24,6 +29,16 @@ func RemoveEmailHeaders(s string) string {
 	re := regexp.MustCompile("(?im:To|From|Bcc|Cc|Reply-To|Sender):")
 	s = re.ReplaceAllString(s, "")
 	return s
+}
+
+func RemoveScriptTagsAndContents(s string) string {
+	re := regexp.MustCompile(`(?im:(<|\&lt;)\s*script\s*(>|\&gt;).*?(<|\&lt;)\s*/\s*script\s*(>|\&gt;))`)
+	s = re.ReplaceAllLiteralString(s, "")
+	return s
+}
+
+func EscapeHTML(s string) string {
+	return template.HTMLEscapeString(s)
 }
 
 func AcceptUnicodeLettersSpacesPunctuation(s string) bool {
@@ -52,10 +67,24 @@ func AcceptAllUnicodeExceptControl(s string) bool {
 	return ans
 }
 
-func RemoveScriptTagsAndContents(s string) string {
-	re := regexp.MustCompile(`(?im:(<|\&lt;)\s*script\s*(>|\&gt;).*?(<|\&lt;)\s*/\s*script\s*(>|\&gt;))`)
-	s = re.ReplaceAllLiteralString(s, "")
-	return s
+func ValidateAsEmail(s string) bool {
+	//	match.Value = "Mr Blah Blah <" + match.Value + ">"
+	_, err := mail.ParseAddress(s)
+	if err != nil {
+		fmt.Printf("Could not parse email address \"%s\".Error: %s\n", s, err)
+		return false
+	}
+	return true
+}
+
+func ValidateAsRestrictedText(s string) bool {
+	var accept = AcceptUnicodeLettersSpacesPunctuation(s)
+	return accept
+}
+
+func ValidateAsUnrestrictedText(s string) bool {
+	var accept = AcceptAllUnicodeExceptControl(s)
+	return accept
 }
 
 func acceptUnicode(s string, cc map[rune]bool) bool {

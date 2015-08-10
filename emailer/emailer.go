@@ -2,19 +2,14 @@ package emailer
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"net/smtp"
-	"path/filepath"
 	"strconv"
 
 	"github.com/owenwaller/email"
 	"github.com/owenwaller/emailformgateway/config"
-	"github.com/owenwaller/emailformgateway/server"
 )
-
-func buildTemplateFilename(dir, filename string) string {
-	return filepath.Join(dir, filename)
-}
 
 func populateTemplate(td config.EmailTemplateData, t string) (string, error) {
 	tmpl, err := template.New("email-template").Parse(t)
@@ -28,16 +23,6 @@ func populateTemplate(td config.EmailTemplateData, t string) (string, error) {
 		return "", err
 	}
 	return buf.String(), nil
-}
-
-func CreateFormDataMap(formFields []server.Field) map[string]string {
-	// now print the fields
-	var m map[string]string
-	m = make(map[string]string)
-	for _, v := range formFields {
-		m[v.Name] = v.Value
-	}
-	return m
 }
 
 func SendEmail(etd config.EmailTemplateData, smtpData config.SmtpData, addr config.EmailAddressData,
@@ -79,15 +64,22 @@ func SendEmail(etd config.EmailTemplateData, smtpData config.SmtpData, addr conf
 	customerEmail.Subject = subject.Customer
 	customerEmail.Text = cttbuf.Bytes() // return a []bytes
 	customerEmail.HTML = chtbuf.Bytes()
-
+	customerEmail.Headers.Add("Reply-To:", addr.CustomerReplyTo)
 	sysEmail := email.NewEmail()
+
 	sysEmail.From = addr.SystemFromName + "<" + addr.SystemFrom + ">"
-	to = etd.FormData["Name"] + "<" + etd.FormData["Email"] + ">"
+	to = addr.SystemToName + "<" + addr.SystemTo + ">"
 	sysEmail.To = []string{to}
 	sysEmail.Subject = subject.System
 	sysEmail.Text = sttbuf.Bytes() // return a []bytes
 	sysEmail.HTML = shtbuf.Bytes()
+	customerEmail.Headers.Add("Reply-To:", addr.SystemReplyTo)
 
+	fmt.Printf("-------\n")
+	fmt.Printf("%s\n", customerEmail)
+	fmt.Printf("-------\n")
+	fmt.Printf("%s\n", sysEmail)
+	fmt.Printf("-------\n")
 	auth := smtp.PlainAuth("", smtpData.Username, smtpData.Password, smtpData.Host)
 
 	hostname := smtpData.Host + ":" + strconv.Itoa(smtpData.Port)

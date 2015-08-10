@@ -10,7 +10,7 @@ import (
 func TestReadConfig(t *testing.T) {
 	var filename = "this/file/does/not/exist.toml"
 	var c conf.Config
-	err := ReadConfig(filename, &c)
+	err := conf.ReadConfig(filename, &c)
 	if err != nil {
 		_, ok := err.(*os.PathError)
 		if !ok {
@@ -22,14 +22,14 @@ func TestReadConfig(t *testing.T) {
 	if filename == "" {
 		t.Fatalf("Required enviromental variable \"TEST_CONFIG_FILE\" not set.\nIt should be the absolute path of the config file.")
 	}
-	err = ReadConfig(filename, &c)
+	err = conf.ReadConfig(filename, &c)
 
 	if err != nil {
 		switch errtype := err.(type) {
-		case ConfigMarshalError:
+		case conf.ConfigMarshalError:
 			// this is the error we expected so ok.
 			//t.Fatalf("Error expected error was not of type ConfigMarshalError. Got %#v\n", err)
-		case ConfigReadError:
+		case conf.ConfigReadError:
 			// this is the error we expected so ok.
 			//t.Fatalf("Error expected error was not of type ConfigReadError. Got %#v\n", err)
 		default:
@@ -42,7 +42,7 @@ func TestReadConfig(t *testing.T) {
 
 func TestSetConfigFilename(t *testing.T) {
 	var filename = "this/file/does/not/exist.toml"
-	err := setConfigFile(filename)
+	err := conf.SetConfigFile(filename)
 	if err == nil {
 		t.Fatalf("Managed to find a file that does not exist %v!\n", filename)
 	}
@@ -55,7 +55,7 @@ func TestSetConfigFilename(t *testing.T) {
 	if filename == "" {
 		t.Fatalf("Required enviromental variable \"TEST_CONFIG_FILE\" not set.\nIt should be the absolute path of the config file.")
 	}
-	err = setConfigFile(filename)
+	err = conf.SetConfigFile(filename)
 	if err != nil {
 		t.Fatalf("Could not find the config file. Error %v\n", err)
 	}
@@ -68,7 +68,7 @@ func TestVerifyConfig(t *testing.T) {
 	if filename == "" {
 		t.Fatalf("Required enviromental variable \"TEST_CONFIG_FILE\" not set.\nIt should be the absolute path of the config file.")
 	}
-	err := ReadConfig(filename, &c)
+	err := conf.ReadConfig(filename, &c)
 	if err != nil {
 		t.Fatalf("Could not read the config file. Error %v\n", err)
 	}
