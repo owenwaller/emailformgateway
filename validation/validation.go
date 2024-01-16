@@ -1,7 +1,7 @@
 package validation
 
 import (
-	"fmt"
+	//"fmt"
 	"html/template"
 	"net/mail"
 	"regexp"
@@ -71,7 +71,7 @@ func ValidateAsEmail(s string) bool {
 	//	match.Value = "Mr Blah Blah <" + match.Value + ">"
 	_, err := mail.ParseAddress(s)
 	if err != nil {
-		fmt.Printf("Could not parse email address \"%s\".Error: %s\n", s, err)
+		//fmt.Printf("Could not parse email address \"%s\".Error: %s\n", s, err)
 		return false
 	}
 	return true
@@ -125,7 +125,7 @@ func acceptUnicode(s string, cc map[rune]bool) bool {
 	var reject = true
 
 	for k, v := range cc {
-		//	fmt.Printf("Present[%c]=%v   cc[%c]=%v\n", k, present[k], k, cc[k])
+		//	//fmt.Printf("Present[%c]=%v   cc[%c]=%v\n", k, present[k], k, cc[k])
 
 		if v == true {
 			accept = accept || present[k]

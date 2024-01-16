@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"fmt"
+	//"fmt"
 	"os"
 
 	conf "github.com/owenwaller/emailformgateway/config"
@@ -26,10 +26,10 @@ func init() {
 }
 
 func rootCmd(cmd *cobra.Command, args []string) {
-	fmt.Printf("Config value = \"%s\"\n", configFilename)
+	//fmt.Printf("Config value = \"%s\"\n", configFilename)
 	err := conf.ReadConfig(configFilename, conf.GetConfig())
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		//fmt.Printf("%v\n", err)
 		os.Exit(-1)
 	}
 	// set up templates

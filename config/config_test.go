@@ -48,8 +48,8 @@ func TestFieldAccess(t *testing.T) {
 	var m map[string]string
 	m = make(map[string]string)
 	for k, v := range c.Fields {
-		fmt.Printf("Key:%v=%v\nKey[%v]\n", k, v, v.Name)
+		//fmt.Printf("Key:%v=%v\nKey[%v]\n", k, v, v.Name)
 		m[v.Name] = v.Name
 	}
-	fmt.Printf("Map=%v\n", m)
+	//fmt.Printf("Map=%v\n", m)
 }

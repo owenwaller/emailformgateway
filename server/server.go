@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	//"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -27,11 +27,11 @@ type formResponse struct {
 }
 
 func Start(c *conf.Config) {
-	fmt.Println("Creating new serve mux")
+	//fmt.Println("Creating new serve mux")
 	corsMux := cors.NewServeMux()
-	fmt.Printf("Registering %s => errorHandler\n", c.Server.Path)
+	//fmt.Printf("Registering %s => errorHandler\n", c.Server.Path)
 	corsMux.HandleFunc(c.Server.Path, gatewayHandler)
-	fmt.Println("Listening on localhost:1314")
+	//fmt.Println("Listening on localhost:1314")
 	host := c.Server.Host + ":" + strconv.Itoa(c.Server.Port)
 	http.ListenAndServe(host, corsMux)
 }
@@ -46,48 +46,48 @@ func gatewayHandler(w http.ResponseWriter, r *http.Request) {
 	var fields []Field
 	err = json.Unmarshal(body, &fields)
 	if err != nil {
-		fmt.Printf("Error could not decode JSON - \"%s\"\n", err)
+		//fmt.Printf("Error could not decode JSON - \"%s\"\n", err)
 	}
-	fmt.Printf("Decoded as \"%#v\"\n", fields)
-	fmt.Printf("fields[0].Value: %s\n", fields[0].Value)
+	//fmt.Printf("Decoded as \"%#v\"\n", fields)
+	//fmt.Printf("fields[0].Value: %s\n", fields[0].Value)
 
 	scrubFields(fields, &fr)
 	writeResponse(w, &fr)
 
-	fmt.Printf("GetConfig()\n")
+	//fmt.Printf("GetConfig()\n")
 	var c = conf.GetConfig()
 	var etd conf.EmailTemplateData
-	fmt.Printf("createFormDataMap()\n")
+	//fmt.Printf("createFormDataMap()\n")
 	etd.FormData = createFormDataMap(fields)
-	fmt.Printf("SplitHostPort()\n")
+	//fmt.Printf("SplitHostPort()\n")
 	var ip, _, _ = net.SplitHostPort(r.RemoteAddr)
-	fmt.Printf("r.Header.Get()\n")
+	//fmt.Printf("r.Header.Get()\n")
 	var xForwardedFor = r.Header.Get("X-FORWARDED-FOR")
-	fmt.Printf("r.UserAgent()\n")
+	//fmt.Printf("r.UserAgent()\n")
 	var ua = r.UserAgent()
 	etd.UserAgent = ua
 	etd.RemoteIp = ip
 	etd.XForwardedFor = xForwardedFor
-	fmt.Printf("SendEmail()\n")
-	fmt.Printf("%v\n", c)
-	fmt.Printf("%v\n", etd)
+	//fmt.Printf("SendEmail()\n")
+	//fmt.Printf("%v\n", c)
+	//fmt.Printf("%v\n", etd)
 	// need to add in the user agent, remote IP and XForwardedFor IP
 	emailer.SendEmail(etd, c.Smtp, c.Addresses, c.Subjects, c.Templates)
-	fmt.Printf("SENT!\n")
+	//fmt.Printf("SENT!\n")
 }
 
 func scrubFields(fields []Field, fr *formResponse) {
-	fmt.Printf("formResponse.Valid=%v\n", fr.Valid)
+	//fmt.Printf("formResponse.Valid=%v\n", fr.Valid)
 	// look in the config to see what fields we should expect
 	var c = conf.GetConfig()
 	for _, v := range c.Fields {
 		// find the type of the fields in the fields map we were sent that has the same name
 		match, err := find(v.Name, fields)
 		if err != nil {
-			fmt.Printf("Error: %s\n", err)
+			//fmt.Printf("Error: %s\n", err)
 		}
 		// else we have a match
-		fmt.Printf("Match found: \"%#v\"\n", match)
+		//fmt.Printf("Match found: \"%#v\"\n", match)
 		// now we have a match we need to validate it according to its type
 		validateField(match, v.Type, fr)
 	}
@@ -119,7 +119,7 @@ func validateField(match *Field, requiredType string, fr *formResponse) {
 	case "textunrestricted":
 		valid = validation.ValidateAsUnrestrictedText(match.Value)
 	default:
-		fmt.Printf("Unknown imput type: \"%s\"\n", requiredType)
+		//fmt.Printf("Unknown imput type: \"%s\"\n", requiredType)
 	}
 
 	if !valid {
@@ -130,14 +130,14 @@ func validateField(match *Field, requiredType string, fr *formResponse) {
 func writeResponse(w http.ResponseWriter, fr *formResponse) {
 	body, err := fr.marshal()
 	if err != nil {
-		fmt.Printf("Error could not create JSON respnse \"%s\"\n", err)
+		//fmt.Printf("Error could not create JSON respnse \"%s\"\n", err)
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(body)
 
 	if err != nil {
-		fmt.Printf("Error: Could not write response \"%s\"\n", err)
+		//fmt.Printf("Error: Could not write response \"%s\"\n", err)
 	}
 	// wipe the bad
 	fr.clearBadFields()

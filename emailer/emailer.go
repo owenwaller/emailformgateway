@@ -2,7 +2,7 @@ package emailer
 
 import (
 	"bytes"
-	"fmt"
+	//"fmt"
 	"html/template"
 	"net/smtp"
 	"strconv"
@@ -75,11 +75,11 @@ func SendEmail(etd config.EmailTemplateData, smtpData config.SmtpData, addr conf
 	sysEmail.HTML = shtbuf.Bytes()
 	customerEmail.Headers.Add("Reply-To:", addr.SystemReplyTo)
 
-	fmt.Printf("-------\n")
-	fmt.Printf("%s\n", customerEmail)
-	fmt.Printf("-------\n")
-	fmt.Printf("%s\n", sysEmail)
-	fmt.Printf("-------\n")
+	//fmt.Printf("-------\n")
+	//fmt.Printf("%s\n", customerEmail)
+	//fmt.Printf("-------\n")
+	//fmt.Printf("%s\n", sysEmail)
+	//fmt.Printf("-------\n")
 	auth := smtp.PlainAuth("", smtpData.Username, smtpData.Password, smtpData.Host)
 
 	hostname := smtpData.Host + ":" + strconv.Itoa(smtpData.Port)
