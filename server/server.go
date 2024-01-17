@@ -3,9 +3,10 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"io"
 
 	//"fmt"
-	"io/ioutil"
+
 	"net"
 	"net/http"
 	"strconv"
@@ -44,7 +45,7 @@ func gatewayHandler(w http.ResponseWriter, r *http.Request) {
 	// and we cannot share the form response across different requests.
 	var fr formResponse
 	// read the json and print it
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 
 	var fields []Field
 	err = json.Unmarshal(body, &fields)
