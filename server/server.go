@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+
 	//"fmt"
 	"io/ioutil"
 	"net"
@@ -10,10 +11,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/owenwaller/cors"
 	conf "github.com/owenwaller/emailformgateway/config"
 	"github.com/owenwaller/emailformgateway/emailer"
 	"github.com/owenwaller/emailformgateway/validation"
+	"github.com/rs/cors"
 )
 
 type Field struct {
@@ -28,9 +29,11 @@ type formResponse struct {
 
 func Start(c *conf.Config) {
 	//fmt.Println("Creating new serve mux")
-	corsMux := cors.NewServeMux()
+	mux := http.NewServeMux()
+	mux.HandleFunc(c.Server.Path, gatewayHandler)
+
+	corsMux := cors.Default().Handler(mux)
 	//fmt.Printf("Registering %s => errorHandler\n", c.Server.Path)
-	corsMux.HandleFunc(c.Server.Path, gatewayHandler)
 	//fmt.Println("Listening on localhost:1314")
 	host := c.Server.Host + ":" + strconv.Itoa(c.Server.Port)
 	http.ListenAndServe(host, corsMux)

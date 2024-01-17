@@ -51,6 +51,7 @@ func TestEmailTemplateMapData(t *testing.T) {
 }
 
 func TestSendEmail(t *testing.T) {
+	t.Skipf("Delay sending any actual emails - the config is set with creds for 123-Reg which are now invalid.")
 	// read a config
 	var c config.Config
 	var td config.EmailTemplateData

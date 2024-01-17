@@ -143,11 +143,11 @@ func ReadConfig(filename string, c *Config) error {
 	}
 
 	//fmt.Printf("All Keys: \"%#v\"\n", viper.AllKeys())
-	err = viper.Marshal(c)
-	if err != nil {
-		me := NewConfigMarshalError("Failed to marshal config.", err.Error())
-		return me
-	}
+	// err = viper.Marshal(c)
+	// if err != nil {
+	// 	me := NewConfigMarshalError("Failed to marshal config.", err.Error())
+	// 	return me
+	// }
 	return err // will be nil
 }
 
