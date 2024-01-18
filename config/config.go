@@ -136,18 +136,25 @@ func ReadConfig(filename string, c *Config) error {
 	if err != nil {
 		return err // returns an os.PathError
 	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	viper.AddConfigPath(cwd)
+
 	err = viper.ReadInConfig()
 	if err != nil {
 		re := NewConfigReadError("Could not read in config.", err.Error())
 		return re
 	}
 
-	//fmt.Printf("All Keys: \"%#v\"\n", viper.AllKeys())
-	// err = viper.Marshal(c)
-	// if err != nil {
-	// 	me := NewConfigMarshalError("Failed to marshal config.", err.Error())
-	// 	return me
-	// }
+	fmt.Printf("All Keys: \"%#v\"\n", viper.AllKeys())
+	err = viper.Unmarshal(c)
+	if err != nil {
+		me := NewConfigMarshalError("Failed to marshal config.", err.Error())
+		return me
+	}
+	fmt.Printf("Config: \"%#v\"\n", c)
 	return err // will be nil
 }
 

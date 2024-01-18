@@ -8,21 +8,21 @@ import (
 )
 
 func TestMarshal(t *testing.T) {
-	viper.SetConfigName("config")
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Could not find cwd. Error \"%s\"\n", err)
-	}
-	viper.AddConfigPath(cwd)
-	err = viper.ReadInConfig()
+	//viper.SetConfigName("config")
+	// cwd, err := os.Getwd()
+	// if err != nil {
+	// 	t.Fatalf("Could not find cwd. Error \"%s\"\n", err)
+	// }
+	//viper.AddConfigPath(cwd)
+	c := new(Config)
+	err := ReadConfig("config.toml", c)
 	if err != nil {
 		t.Fatalf("Failed to read config. Error: \"%s\"\n", err)
 	}
-	// err = viper.Marshal(&c)
-	// if err != nil {
-	// 	t.Fatalf("Failed to marshal config. Error: \"%s\"\n", err)
-	// }
-	//viper.Debug()
+	err = viper.Unmarshal(&c)
+	if err != nil {
+		t.Fatalf("Failed to marshal config. Error: \"%s\"\n", err)
+	}
 }
 
 func TestFieldAccess(t *testing.T) {
@@ -37,10 +37,10 @@ func TestFieldAccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to read config. Error: \"%s\"\n", err)
 	}
-	// err = viper.Marshal(&c)
-	// if err != nil {
-	// 	t.Fatalf("Failed to marshal config. Error: \"%s\"\n", err)
-	// }
+	err = viper.Unmarshal(&c)
+	if err != nil {
+		t.Fatalf("Failed to marshal config. Error: \"%s\"\n", err)
+	}
 
 	// now print the fields
 	var m map[string]string
