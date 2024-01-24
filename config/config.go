@@ -12,6 +12,7 @@ type Config struct {
 	Server    ServerData
 	LogFile   LogFileData
 	Smtp      SmtpData
+	Auth      AuthData
 	Addresses EmailAddressData
 	Subjects  EmailSubjectData
 	Templates EmailTemplatesData
@@ -31,8 +32,11 @@ type LogFileData struct {
 }
 
 type SmtpData struct {
-	Host     string
-	Port     int
+	Host string
+	Port int
+}
+
+type AuthData struct {
 	Username string
 	Password string
 }
@@ -148,13 +152,11 @@ func ReadConfig(filename string, c *Config) error {
 		return re
 	}
 
-	fmt.Printf("All Keys: \"%#v\"\n", viper.AllKeys())
 	err = viper.Unmarshal(c)
 	if err != nil {
 		me := NewConfigMarshalError("Failed to marshal config.", err.Error())
 		return me
 	}
-	fmt.Printf("Config: \"%#v\"\n", c)
 	return err // will be nil
 }
 

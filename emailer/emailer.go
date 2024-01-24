@@ -2,12 +2,18 @@ package emailer
 
 import (
 	"bytes"
+	"fmt"
+	"io"
+	"strconv"
+	"time"
+
+	"github.com/emersion/go-sasl"
+	"github.com/emersion/go-smtp"
+
 	//"fmt"
 	"html/template"
-	"net/smtp"
-	"strconv"
 
-	"github.com/owenwaller/email"
+	"github.com/emersion/go-message/mail"
 	"github.com/owenwaller/emailformgateway/config"
 )
 
@@ -25,9 +31,41 @@ func populateTemplate(td config.EmailTemplateData, t string) (string, error) {
 	return buf.String(), nil
 }
 
-func SendEmail(etd config.EmailTemplateData, smtpData config.SmtpData, addr config.EmailAddressData,
+func SendEmail(etd config.EmailTemplateData, smtpData config.SmtpData, authData config.AuthData, addr config.EmailAddressData,
 	subject config.EmailSubjectData, templatesData config.EmailTemplatesData) error {
 
+	// write the email we want to send into the customerEmail bytes.Buffer or fail.
+	customerEmail, err := newCustomerEmail(etd, addr, subject, templatesData)
+
+	// for the minute...duplicate creating the to and from addresses here (also in newCustomerEmail)
+	from := []*mail.Address{{addr.CustomerFromName, addr.CustomerFrom}}
+	to := []*mail.Address{{etd.FormData["Name"], etd.FormData["Email"]}}
+
+	toStrs := make([]string, 0)
+	for i := range to {
+		toStrs = append(toStrs, to[i].Address)
+	}
+	hostname := smtpData.Host + ":" + strconv.Itoa(smtpData.Port)
+
+	//	do we need auth for this server?
+	if authData.Password != "" && authData.Username != "" {
+		clientAuth := sasl.NewPlainClient("", authData.Username, authData.Password)
+		err = smtp.SendMail(hostname, clientAuth, from[0].String(), toStrs, bytes.NewReader(customerEmail.Bytes()))
+	} else {
+		// no auth version
+		err = smtp.SendMail(hostname, nil, from[0].String(), toStrs, bytes.NewReader(customerEmail.Bytes()))
+
+	}
+	if err != nil {
+		return err
+	}
+
+	return err
+
+}
+
+func newCustomerEmail(etd config.EmailTemplateData, addr config.EmailAddressData,
+	subject config.EmailSubjectData, templatesData config.EmailTemplatesData) (bytes.Buffer, error) {
 	// now create the templates
 	ctt := template.Must(template.ParseFiles(templatesData.CustomerTextFileName))
 	cht := template.Must(template.ParseFiles(templatesData.CustomerHtmlFileName))
@@ -40,72 +78,81 @@ func SendEmail(etd config.EmailTemplateData, smtpData config.SmtpData, addr conf
 	var shtbuf = bytes.NewBufferString("")
 	err := ctt.Execute(cttbuf, etd)
 	if err != nil {
-		return err
+		return bytes.Buffer{}, err
 	}
 	err = cht.Execute(chtbuf, etd)
 	if err != nil {
-		return err
+		return bytes.Buffer{}, err
 	}
 	err = stt.Execute(sttbuf, etd)
 	if err != nil {
-		return err
+		return bytes.Buffer{}, err
 	}
 	err = sht.Execute(shtbuf, etd)
 	if err != nil {
-		return err
+		return bytes.Buffer{}, err
 	}
 
-	// now build the emails
-	// need to add a reply-to header
-	customerEmail := email.NewEmail()
-	customerEmail.From = addr.CustomerFromName + "<" + addr.CustomerFrom + ">"
-	to := etd.FormData["Name"] + "<" + etd.FormData["Email"] + ">"
-	customerEmail.To = []string{to}
-	customerEmail.Subject = subject.Customer
-	customerEmail.Text = cttbuf.Bytes() // return a []bytes
-	customerEmail.HTML = chtbuf.Bytes()
-	customerEmail.Headers.Add("Reply-To:", addr.CustomerReplyTo)
-	sysEmail := email.NewEmail()
-
-	sysEmail.From = addr.SystemFromName + "<" + addr.SystemFrom + ">"
-	to = addr.SystemToName + "<" + addr.SystemTo + ">"
-	sysEmail.To = []string{to}
-	sysEmail.Subject = subject.System
-	sysEmail.Text = sttbuf.Bytes() // return a []bytes
-	sysEmail.HTML = shtbuf.Bytes()
-	customerEmail.Headers.Add("Reply-To:", addr.SystemReplyTo)
-
-	//fmt.Printf("-------\n")
-	//fmt.Printf("%s\n", customerEmail)
-	//fmt.Printf("-------\n")
-	//fmt.Printf("%s\n", sysEmail)
-	//fmt.Printf("-------\n")
-	auth := smtp.PlainAuth("", smtpData.Username, smtpData.Password, smtpData.Host)
-
-	hostname := smtpData.Host + ":" + strconv.Itoa(smtpData.Port)
-	err = customerEmail.Send(hostname, auth)
+	// now build the customer email as a multi part email
+	var customerEmail bytes.Buffer
+	fmt.Printf("Form Data: %+v\n", etd.FormData)
+	from := []*mail.Address{{addr.CustomerFromName, addr.CustomerFrom}}
+	to := []*mail.Address{{etd.FormData["Name"], etd.FormData["Email"]}}
+	replyTo := []*mail.Address{{addr.CustomerReplyTo, addr.CustomerReplyTo}}
+	var h mail.Header
+	h.SetDate(time.Now())
+	h.SetAddressList("From", from)
+	h.SetAddressList("To", to)
+	h.SetAddressList("Reply-To", replyTo)
+	h.SetSubject(subject.Customer)
+	err = h.GenerateMessageIDWithHostname("gophercoders.com") // we need to pass the domain name in somehow.... or do some sort of DNS query??
 	if err != nil {
-		return err
+		return bytes.Buffer{}, err
 	}
-	err = sysEmail.Send(hostname, auth)
-	if err != nil {
-		return err
-	}
-	return err
 
+	h.SetContentType("multipart/alternative", nil)
+	emailWriter, err := mail.CreateWriter(&customerEmail, h)
+	if err != nil {
+		return bytes.Buffer{}, err
+	}
+	defer emailWriter.Close()
+
+	htmlWriter, err := emailWriter.CreateInline()
+	if err != nil {
+		return bytes.Buffer{}, err
+	}
+	defer htmlWriter.Close()
+
+	var htmlHeader mail.InlineHeader
+	htmlHeader.SetContentType("text/html", nil)
+	htmlPartWriter, err := htmlWriter.CreatePart(htmlHeader)
+	if err != nil {
+		return bytes.Buffer{}, err
+	}
+	defer htmlPartWriter.Close()
+	_, err = io.Copy(htmlPartWriter, chtbuf)
+	if err != nil {
+		return bytes.Buffer{}, err
+	}
+
+	plainWriter, err := emailWriter.CreateInline()
+	if err != nil {
+		return bytes.Buffer{}, err
+	}
+	defer plainWriter.Close()
+
+	var plainHeader mail.InlineHeader
+	plainHeader.SetContentType("text/plain", nil)
+	plainPartWriter, err := plainWriter.CreatePart(plainHeader)
+	if err != nil {
+		return bytes.Buffer{}, err
+	}
+	defer plainPartWriter.Close()
+	_, err = io.Copy(plainPartWriter, cttbuf)
+	if err != nil {
+		return bytes.Buffer{}, err
+	}
+
+	//log.Println(customerEmail.String())
+	return customerEmail, nil
 }
-
-//func SendEmail(c Config) error {
-//
-//}
-/*
-e := NewEmail()
-e.From = "Jordan Wright <test@gmail.com>"
-e.To = []string{"test@example.com"}
-e.Bcc = []string{"test_bcc@example.com"}
-e.Cc = []string{"test_cc@example.com"}
-e.Subject = "Awesome Subject"
-e.Text = []byte("Text Body is, of course, supported!\n")
-e.HTML = []byte("<h1>Fancy Html is supported, too!</h1>\n")
-e.Send("smtp.gmail.com:587", smtp.PlainAuth("", e.From, "password123", "smtp.gmail.com"))
-*/

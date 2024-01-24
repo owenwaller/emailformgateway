@@ -1,6 +1,7 @@
 package emailer
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -51,7 +52,6 @@ func TestEmailTemplateMapData(t *testing.T) {
 }
 
 func TestSendEmail(t *testing.T) {
-	t.Skipf("Delay sending any actual emails - the config is set with creds for 123-Reg which are now invalid.")
 	// read a config
 	var c config.Config
 	var td config.EmailTemplateData
@@ -61,26 +61,34 @@ func TestSendEmail(t *testing.T) {
 	td.FormData["Subject"] = "the feedback subject"
 	td.FormData["Feedback"] = "this is the feedback"
 
+	// first get all the templates
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Printf("PWD: %q\n", cwd)
+
 	// now try with a real file - via the ENV
 	var filename = os.Getenv("TEST_CONFIG_FILE")
 	if filename == "" {
 		t.Fatalf("Required enviromental variable \"TEST_CONFIG_FILE\" not set.\nIt should be the absolute path of the config file.")
 	}
-	err := config.ReadConfig(filename, &c)
+	err = config.ReadConfig(filename, &c)
 	if err != nil {
 		t.Fatalf("unexpected error reading config %v\n", err)
 	}
 
 	// first get all the templates
-	c.Templates.CustomerTextFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.CustomerText)
-	c.Templates.CustomerHtmlFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.CustomerHtml)
-	c.Templates.SystemTextFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.SystemText)
-	c.Templates.SystemHtmlFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.SystemHtml)
 
-	var expectedCtt = "/home/owen/go/src/github.com/owenwaller/emailformgateway/customer-email-text.template"
-	var expectedCht = "/home/owen/go/src/github.com/owenwaller/emailformgateway/customer-email-html.template"
-	var expectedStt = "/home/owen/go/src/github.com/owenwaller/emailformgateway/system-email-text.template"
-	var expectedSht = "/home/owen/go/src/github.com/owenwaller/emailformgateway/system-email-html.template"
+	c.Templates.CustomerTextFileName = config.BuildTemplateFilename(cwd, c.Templates.CustomerText)
+	c.Templates.CustomerHtmlFileName = config.BuildTemplateFilename(cwd, c.Templates.CustomerHtml)
+	c.Templates.SystemTextFileName = config.BuildTemplateFilename(cwd, c.Templates.SystemText)
+	c.Templates.SystemHtmlFileName = config.BuildTemplateFilename(cwd, c.Templates.SystemHtml)
+
+	var expectedCtt = config.BuildTemplateFilename(cwd, "customer-email-text.template")
+	var expectedCht = config.BuildTemplateFilename(cwd, "customer-email-html.template")
+	var expectedStt = config.BuildTemplateFilename(cwd, "system-email-text.template")
+	var expectedSht = config.BuildTemplateFilename(cwd, "system-email-html.template")
 
 	if c.Templates.CustomerTextFileName != expectedCtt {
 		t.Fatalf("Did not get expected filename. Expected: %v Got %v\n", expectedCtt, c.Templates.CustomerTextFileName)
@@ -95,7 +103,7 @@ func TestSendEmail(t *testing.T) {
 		t.Fatalf("Did not get expected filename. Expected: %v Got %v\n", expectedSht, c.Templates.SystemHtmlFileName)
 	}
 
-	err = SendEmail(td, c.Smtp, c.Addresses,
+	err = SendEmail(td, c.Smtp, c.Auth, c.Addresses,
 		c.Subjects, c.Templates)
 	if err != nil {
 		t.Fatalf("unexpected error sending email %v\n", err)
