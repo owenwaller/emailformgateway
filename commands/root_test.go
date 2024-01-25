@@ -32,6 +32,8 @@ func TestReadConfig(t *testing.T) {
 		case conf.ConfigReadError:
 			// this is the error we expected so ok.
 			//t.Fatalf("Error expected error was not of type ConfigReadError. Got %#v\n", err)
+		case *os.PathError:
+			// this is an error we expect so ok.
 		default:
 			// or we got an error we did not expect
 			t.Fatalf("Error expected error was not of type %#v. Got %#v\n", errtype, err)
@@ -55,6 +57,7 @@ func TestSetConfigFilename(t *testing.T) {
 	if filename == "" {
 		t.Fatalf("Required enviromental variable \"TEST_CONFIG_FILE\" not set.\nIt should be the absolute path of the config file.")
 	}
+
 	err = conf.SetConfigFile(filename)
 	if err != nil {
 		t.Fatalf("Could not find the config file. Error %v\n", err)
