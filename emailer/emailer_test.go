@@ -1,7 +1,6 @@
 package emailer
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -66,7 +65,6 @@ func TestSendEmail(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Printf("PWD: %q\n", cwd)
 
 	// now try with a real file - via the ENV
 	var filename = os.Getenv("TEST_CONFIG_FILE")
