@@ -136,14 +136,11 @@ func SetConfigFile(configFilename string) error {
 	path := filepath.Dir(configFilename)
 	ext := filepath.Ext(configFilename)
 	base := filepath.Base(configFilename) // will be filename.ext or filename or last dir name
-	if path != "" {
-		viper.AddConfigPath(path)
-	}
-	if ext != "" {
-		viper.SetConfigType(ext)
-	}
+	viper.AddConfigPath(path)
+	viper.SetConfigType(ext)
 	configFilename = base[:len(base)-len(ext)] // if this filename does not exit we will fail when we try to open it for reading,
-	viper.SetConfigName(configFilename)
+	viper.SetConfigName(configFilename)        // just in case the slicing results in an empty string
+
 	return nil
 }
 
