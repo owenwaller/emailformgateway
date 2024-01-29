@@ -52,11 +52,17 @@ func TestEmailTemplateMapData(t *testing.T) {
 
 func TestSendEmail(t *testing.T) {
 	// read a config
-	var c config.Config
+	//var c config.Config
 	var td config.EmailTemplateData
 	td.FormData = make(map[string]string)
 	td.FormData["Name"] = "Email Tester"
-	td.FormData["Email"] = "owenwaller@gmail.com"
+
+	// take the to address for the test email from an env var so we don't have this in the source code
+	toAddr, ok := os.LookupEnv("TEST_TO_EMAIL_ADDRESS")
+	if !ok {
+		t.Fatalf("The environmental TEST_TO_EMAIL_ADDRESS is undefined.")
+	}
+	td.FormData["Email"] = toAddr
 	td.FormData["Subject"] = "the feedback subject"
 	td.FormData["Feedback"] = "this is the feedback"
 
@@ -71,9 +77,15 @@ func TestSendEmail(t *testing.T) {
 	if filename == "" {
 		t.Fatalf("Required enviromental variable \"TEST_CONFIG_FILE\" not set.\nIt should be the absolute path of the config file.")
 	}
-	err = config.ReadConfig(filename, &c)
+
+	// err = config.ReadConfig(filename, &c)
+	// if err != nil {
+	// 	t.Fatalf("unexpected error reading config %v\n", err)
+	// }
+	//configFileName := DefaultConfigFilename
+	c, err := config.ReadConfig(filename)
 	if err != nil {
-		t.Fatalf("unexpected error reading config %v\n", err)
+		t.Fatal(err)
 	}
 
 	// first get all the templates

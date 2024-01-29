@@ -1,0 +1,53 @@
+# TOML config for the emailformgateway
+[Server]
+Host = "localhost"
+Path = "/"
+Port = 1314
+
+[LogFile]
+Filename = "access.log"
+Path = "/var/log/emailformgateway"
+Level = "INFO"
+
+[Smtp]
+Host = "smtp.localhost"
+Port = 25
+
+[Auth]
+Username = "local.user@localhost"
+Password = "password123"
+
+[Addresses]
+CustomerFrom = "do-not-reply@localhost"
+CustomerFromName = "Localhost Contact Us"
+CustomerReplyTo = "do-not-reply@localhost"
+SystemTo = "to@localhost"
+SystemToName = "Localhost Contact Us Form"
+SystemFrom = "do-not-reply@localhost"
+SystemFromName = "Localhost Contact Us Form"
+SystemReplyTo = "do-not-reply@localhost.com"
+
+[Subjects]
+Customer = "Thank you for contacting localhost!"
+System = "Localhost Contact Us Form Message:"
+
+[Templates]
+Dir = "/template/dir"
+CustomerText = "customer-email-text.template"
+CustomerHtml = "customer-email-html.template"
+SystemText = "system-email-text.template"
+SystemHtml = "system-email-html.template"
+
+[Fields]
+    [Fields.Field1]
+    Name="name"
+    Type="textRestricted"
+    [Fields.Field2]
+    Name="email"
+    Type="email"
+    [Fields.Field3]
+    Name="subject"
+    Type="textRestricted"
+    [Fields.Field4]
+    Name="feedback"
+    Type="textUnrestricted"

@@ -4,6 +4,7 @@ import (
 	//"fmt"
 	"os"
 
+	"github.com/owenwaller/emailformgateway/config"
 	conf "github.com/owenwaller/emailformgateway/config"
 	"github.com/owenwaller/emailformgateway/server"
 	"github.com/spf13/cobra"
@@ -27,12 +28,19 @@ func init() {
 
 func rootCmd(cmd *cobra.Command, args []string) {
 	//fmt.Printf("Config value = \"%s\"\n", configFilename)
-	err := conf.ReadConfig(configFilename, conf.GetConfig())
+	// err := conf.ReadConfig(configFilename, conf.GetConfig())
+	// if err != nil {
+	// 	//fmt.Printf("%v\n", err)
+	// 	os.Exit(-1)
+	// }
+
+	//configFileName := DefaultConfigFilename
+	c, err := config.ReadConfig(configFilename)
 	if err != nil {
-		//fmt.Printf("%v\n", err)
 		os.Exit(-1)
 	}
+
 	// set up templates
 	conf.SetUpTemplates()
-	server.Start(conf.GetConfig())
+	server.Start(c)
 }

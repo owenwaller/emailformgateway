@@ -76,7 +76,7 @@ func gatewayHandler(w http.ResponseWriter, r *http.Request) {
 	//fmt.Printf("%v\n", c)
 	//fmt.Printf("%v\n", etd)
 	// need to add in the user agent, remote IP and XForwardedFor IP
-	emailer.SendEmail(etd, c.Smtp, c.Addresses, c.Subjects, c.Templates)
+	emailer.SendEmail(etd, c.Smtp, c.Auth, c.Addresses, c.Subjects, c.Templates)
 	//fmt.Printf("SENT!\n")
 }
 
