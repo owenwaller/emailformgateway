@@ -1,10 +1,14 @@
 package emailer
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/owenwaller/emailformgateway/config"
+	"github.com/spf13/viper"
 )
 
 func TestFullPathToTemplates(t *testing.T) {
@@ -58,47 +62,53 @@ func TestSendEmail(t *testing.T) {
 	td.FormData["Name"] = "Email Tester"
 
 	// take the to address for the test email from an env var so we don't have this in the source code
-	toAddr, ok := os.LookupEnv("TEST_TO_EMAIL_ADDRESS")
+	// We can't use a viper env var binding for this as this comes from the form data
+	toAddr, ok := os.LookupEnv("TEST_CUSTOMER_TO_EMAIL_ADDRESS")
 	if !ok {
-		t.Fatalf("The environmental TEST_TO_EMAIL_ADDRESS is undefined.")
+		t.Fatalf("The environmental TEST_CUSTOMER_TO_EMAIL_ADDRESS is undefined.")
 	}
 	td.FormData["Email"] = toAddr
 	td.FormData["Subject"] = "the feedback subject"
 	td.FormData["Feedback"] = "this is the feedback"
 
-	// first get all the templates
-	cwd, err := os.Getwd()
+	// use a viper env var binding to set the System To address and the teamplates directory
+	err := viper.BindEnv("Addresses.SystemTo", "TEST_SYSTEM_TO_EMAIL_ADDRESS")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Could not bind to TEST_SYSTEM_TO_EMAIL_ADDRESS env var. Error: %s", err)
+	}
+	err = viper.BindEnv("Templates.Dir", "TEST_TEMPLATES_DIR")
+	if err != nil {
+		t.Fatalf("Could not bind to TEST_TEMPLATES_DIR env var. Error: %s", err)
 	}
 
 	// now try with a real file - via the ENV
 	var filename = os.Getenv("TEST_CONFIG_FILE")
 	if filename == "" {
-		t.Fatalf("Required enviromental variable \"TEST_CONFIG_FILE\" not set.\nIt should be the absolute path of the config file.")
+		t.Fatalf("Required environmental variable \"TEST_CONFIG_FILE\" not set.\nIt should be the absolute path of the config file.")
 	}
 
-	// err = config.ReadConfig(filename, &c)
-	// if err != nil {
-	// 	t.Fatalf("unexpected error reading config %v\n", err)
-	// }
-	//configFileName := DefaultConfigFilename
 	c, err := config.ReadConfig(filename)
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	log.Printf("CustomerTo: %q\n", toAddr)
+	log.Printf("SystemTo: %q\n", viper.GetString("Addresses.SystemTo"))
+	log.Printf("SystemToName: %q\n", viper.GetString("Addresses.SystemToName"))
+	log.Printf("Templates Dir: %q\n", viper.GetString("Templates.Dir"))
+	log.Printf("Config File: %q\n", viper.ConfigFileUsed())
+
 	// first get all the templates
 
-	c.Templates.CustomerTextFileName = config.BuildTemplateFilename(cwd, c.Templates.CustomerText)
-	c.Templates.CustomerHtmlFileName = config.BuildTemplateFilename(cwd, c.Templates.CustomerHtml)
-	c.Templates.SystemTextFileName = config.BuildTemplateFilename(cwd, c.Templates.SystemText)
-	c.Templates.SystemHtmlFileName = config.BuildTemplateFilename(cwd, c.Templates.SystemHtml)
+	c.Templates.CustomerTextFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.CustomerText)
+	c.Templates.CustomerHtmlFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.CustomerHtml)
+	c.Templates.SystemTextFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.SystemText)
+	c.Templates.SystemHtmlFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.SystemHtml)
 
-	var expectedCtt = config.BuildTemplateFilename(cwd, "customer-email-text.template")
-	var expectedCht = config.BuildTemplateFilename(cwd, "customer-email-html.template")
-	var expectedStt = config.BuildTemplateFilename(cwd, "system-email-text.template")
-	var expectedSht = config.BuildTemplateFilename(cwd, "system-email-html.template")
+	var expectedCtt = config.BuildTemplateFilename(c.Templates.Dir, "customer-email-text.template")
+	var expectedCht = config.BuildTemplateFilename(c.Templates.Dir, "customer-email-html.template")
+	var expectedStt = config.BuildTemplateFilename(c.Templates.Dir, "system-email-text.template")
+	var expectedSht = config.BuildTemplateFilename(c.Templates.Dir, "system-email-html.template")
 
 	if c.Templates.CustomerTextFileName != expectedCtt {
 		t.Fatalf("Did not get expected filename. Expected: %v Got %v\n", expectedCtt, c.Templates.CustomerTextFileName)
@@ -112,6 +122,11 @@ func TestSendEmail(t *testing.T) {
 	if c.Templates.SystemHtmlFileName != expectedSht {
 		t.Fatalf("Did not get expected filename. Expected: %v Got %v\n", expectedSht, c.Templates.SystemHtmlFileName)
 	}
+
+	formatted := time.Now().Format(time.RFC3339)
+	// add the time/date to the subject lines
+	c.Subjects.Customer = fmt.Sprintf("%s %s", formatted, c.Subjects.Customer)
+	c.Subjects.System = fmt.Sprintf("%s %s", formatted, c.Subjects.System)
 
 	err = SendEmail(td, c.Smtp, c.Auth, c.Addresses,
 		c.Subjects, c.Templates)

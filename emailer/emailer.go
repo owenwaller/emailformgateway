@@ -2,7 +2,9 @@ package emailer
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"log"
 	"strconv"
 	"time"
 
@@ -77,7 +79,9 @@ func sendCustomerEmail(etd config.EmailTemplateData, smtpData config.SmtpData, a
 		// no auth version
 		err = smtp.SendMail(hostname, nil, from[0].String(), toStrs, bytes.NewReader(email))
 	}
-
+	if err != nil {
+		return fmt.Errorf("Error sending customer email: %w", err)
+	}
 	return err
 }
 
@@ -101,6 +105,11 @@ func sendSystemEmail(etd config.EmailTemplateData, smtpData config.SmtpData, aut
 	} else {
 		// no auth version
 		err = smtp.SendMail(hostname, nil, from[0].Address, toStrs, bytes.NewReader(email))
+	}
+	if err != nil {
+		log.Printf("From: %qn", from[0].Address)
+		log.Printf("To: %v\n", toStrs)
+		return fmt.Errorf("Error sending system email: %w", err)
 	}
 	return err
 }
