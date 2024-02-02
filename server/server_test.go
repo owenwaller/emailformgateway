@@ -1,8 +1,12 @@
 package server
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -141,4 +145,69 @@ func TestServerResponseHeader(t *testing.T) {
 		}
 	}
 
+}
+
+// Test sending an email using an HTTP POST as the browser does.
+func TestServerSendEmail(t *testing.T) {
+	// The web form sends a JSON array of key value encoded pairs like this:
+	// [
+	// 	{
+	// 		"name": "name",
+	// 		"value": "Me"
+	// 	},
+	// 	{
+	// 		"name": "email",
+	// 		"value": "Me@example.com"
+	// 	},
+	// 	{
+	// 		"name": "subject",
+	// 		"value": "The subject"
+	// 	},
+	// 	{
+	// 		"name": "feedback",
+	// 		"value": "The feedback"
+	// 	}
+	// ]
+	//
+	// These will then map into a []Fields
+	fields := make([]Field, 0)
+
+	// Create the slice of Field, pulling the To address from the env var
+	fields = append(fields, Field{Name: "name", Value: "Me"})
+	fields = append(fields, Field{Name: "subject", Value: "The subject"})
+	fields = append(fields, Field{Name: "feedback", Value: "The feedback"})
+
+	var to = os.Getenv("TEST_CUSTOMER_TO_EMAIL")
+	if to == "" {
+		t.Fatalf("Required environmental variable \"TEST_CUSTOMER_TO_EMAIL\" not set.")
+	}
+	fields = append(fields, Field{Name: "email", Value: to})
+
+	// now encode the slice as JSON, as the Client side javascript does.
+	b, err := json.Marshal(fields)
+	jsonReader := bytes.NewReader(b)
+	// create the server
+	s := httptest.NewServer(http.HandlerFunc(gatewayHandler))
+	defer s.Close()
+
+	// use the default http client to POST to the server
+	resp, err := http.Post(s.URL, "application/json; charset=utf-8", jsonReader)
+
+	// we expect HTTP 200 OK back
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("Got a status code of %d not %d. Error: %s", resp.StatusCode, http.StatusOK, err)
+	}
+	// We don't expect an error
+	if err != nil {
+		t.Fatalf("Failed to post to server: %s", err)
+	}
+	// we do expect an empty body on success
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Request.Body)
+	if err != nil {
+		t.Fatalf("Failed to Read the response body: %s", err)
+	}
+	if string(body) != "" {
+		t.Fatalf("Expected an emptry string in the response body but got %s.", string(body))
+	}
 }

@@ -3,19 +3,21 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
-
-	//"fmt"
+	"log"
+	"os"
 
 	"net"
 	"net/http"
 	"strconv"
 	"strings"
 
-	conf "github.com/owenwaller/emailformgateway/config"
+	"github.com/owenwaller/emailformgateway/config"
 	"github.com/owenwaller/emailformgateway/emailer"
 	"github.com/owenwaller/emailformgateway/validation"
 	"github.com/rs/cors"
+	"github.com/spf13/viper"
 )
 
 type Field struct {
@@ -28,7 +30,7 @@ type formResponse struct {
 	BadFields []string
 }
 
-func Start(c *conf.Config) {
+func Start(c *config.Config) {
 	//fmt.Println("Creating new serve mux")
 	mux := http.NewServeMux()
 	mux.HandleFunc(c.Server.Path, gatewayHandler)
@@ -41,49 +43,100 @@ func Start(c *conf.Config) {
 }
 
 func gatewayHandler(w http.ResponseWriter, r *http.Request) {
-	// the formResponse must be local - the handler runs in its own go routine
-	// and we cannot share the form response across different requests.
-	var fr formResponse
-	// read the json and print it
+	// The web form sends a JSON array of key value encoded pairs like this:
+	// [
+	// 	{
+	// 		"name": "name",
+	// 		"value": "Me"
+	// 	},
+	// 	{
+	// 		"name": "email",
+	// 		"value": "Me@example.com"
+	// 	},
+	// 	{
+	// 		"name": "subject",
+	// 		"value": "The subject"
+	// 	},
+	// 	{
+	// 		"name": "feedback",
+	// 		"value": "The feedback"
+	// 	}
+	// ]
+	//
+	// read the json and decode it
 	body, err := io.ReadAll(r.Body)
-
+	if err != nil {
+		fmt.Printf("Could not read the http request body: %s", err)
+	}
 	var fields []Field
 	err = json.Unmarshal(body, &fields)
 	if err != nil {
-		//fmt.Printf("Error could not decode JSON - \"%s\"\n", err)
+		fmt.Printf("Error could not decode JSON - \"%s\"\n", err)
 	}
-	//fmt.Printf("Decoded as \"%#v\"\n", fields)
-	//fmt.Printf("fields[0].Value: %s\n", fields[0].Value)
 
+	// validate and write the http response.
+	var fr formResponse
 	scrubFields(fields, &fr)
+	// The server always writes HTTP 200 OK back to the client along with the form response.
+	// The form response always sets the formResponse.Valid field to true or false. The browser based client
+	// then looks at the value of the valid field to determine if the form data was rejected or not.
+	// This isn't very RESTful, but it is the way it works ATM
 	writeResponse(w, &fr)
 
-	//fmt.Printf("GetConfig()\n")
-	var c = conf.GetConfig()
-	var etd conf.EmailTemplateData
-	//fmt.Printf("createFormDataMap()\n")
+	// now try to send the email, the client already has the correct response.
+	// use a viper env var binding to set the System To address and the templates directory
+	err = viper.BindEnv("Addresses.SystemTo", "TEST_SYSTEM_TO_EMAIL_ADDRESS")
+	if err != nil {
+		log.Fatalf("Could not bind to TEST_SYSTEM_TO_EMAIL_ADDRESS env var. Error: %s", err)
+	}
+	err = viper.BindEnv("Templates.Dir", "TEST_TEMPLATES_DIR")
+	if err != nil {
+		log.Fatalf("Could not bind to TEST_TEMPLATES_DIR env var. Error: %s", err)
+	}
+
+	// now read the config file
+	var filename = os.Getenv("TEST_CONFIG_FILE")
+	if filename == "" {
+		log.Fatalf("Required environmental variable \"TEST_CONFIG_FILE\" not set.\nIt should be the absolute path of the config file.")
+	}
+	c, err := config.ReadConfig(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("SystemTo: %q\n", viper.GetString("Addresses.SystemTo"))
+	log.Printf("SystemToName: %q\n", viper.GetString("Addresses.SystemToName"))
+	log.Printf("Templates Dir: %q\n", viper.GetString("Templates.Dir"))
+	log.Printf("Config File: %q\n", viper.ConfigFileUsed())
+
+	// set the full path to the templates - this should really be done dynamically by the emailer package...
+	c.Templates.CustomerTextFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.CustomerText)
+	c.Templates.CustomerHtmlFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.CustomerHtml)
+	c.Templates.SystemTextFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.SystemText)
+	c.Templates.SystemHtmlFileName = config.BuildTemplateFilename(c.Templates.Dir, c.Templates.SystemHtml)
+
+	// build the EmailTemplateData that we pass to emailer.SendMail. This holds the info we want to add to the email messages.
+	var etd config.EmailTemplateData
 	etd.FormData = createFormDataMap(fields)
-	//fmt.Printf("SplitHostPort()\n")
 	var ip, _, _ = net.SplitHostPort(r.RemoteAddr)
-	//fmt.Printf("r.Header.Get()\n")
 	var xForwardedFor = r.Header.Get("X-FORWARDED-FOR")
-	//fmt.Printf("r.UserAgent()\n")
 	var ua = r.UserAgent()
 	etd.UserAgent = ua
 	etd.RemoteIp = ip
 	etd.XForwardedFor = xForwardedFor
-	//fmt.Printf("SendEmail()\n")
-	//fmt.Printf("%v\n", c)
-	//fmt.Printf("%v\n", etd)
-	// need to add in the user agent, remote IP and XForwardedFor IP
-	emailer.SendEmail(etd, c.Smtp, c.Auth, c.Addresses, c.Subjects, c.Templates)
+
+	// try to send the email
+	err = emailer.SendEmail(etd, c.Smtp, c.Auth, c.Addresses, c.Subjects, c.Templates)
+	if err != nil {
+		log.Fatalf("Failed to send email; %s", err)
+	}
 	//fmt.Printf("SENT!\n")
 }
 
 func scrubFields(fields []Field, fr *formResponse) {
 	//fmt.Printf("formResponse.Valid=%v\n", fr.Valid)
 	// look in the config to see what fields we should expect
-	var c = conf.GetConfig()
+	var c = config.GetConfig()
 	for _, v := range c.Fields {
 		// find the type of the fields in the fields map we were sent that has the same name
 		match, err := find(v.Name, fields)
