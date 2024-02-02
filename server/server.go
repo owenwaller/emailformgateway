@@ -187,14 +187,13 @@ func validateField(match *Field, requiredType string, fr *formResponse) {
 func writeResponse(w http.ResponseWriter, fr *formResponse) {
 	body, err := fr.marshal()
 	if err != nil {
-		//fmt.Printf("Error could not create JSON respnse \"%s\"\n", err)
+		log.Printf("Error could not create JSON response \"%s\"\n", err)
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(body)
-
 	if err != nil {
-		//fmt.Printf("Error: Could not write response \"%s\"\n", err)
+		log.Printf("Error: Could not write response \"%s\"\n", err)
 	}
 	// wipe the bad
 	fr.clearBadFields()

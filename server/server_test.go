@@ -203,11 +203,21 @@ func TestServerSendEmail(t *testing.T) {
 	}
 	// we do expect an empty body on success
 	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Request.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("Failed to Read the response body: %s", err)
 	}
-	if string(body) != "" {
-		t.Fatalf("Expected an emptry string in the response body but got %s.", string(body))
+	// the response should be a JSON encoded formResponse, with the Valid field set to true
+	var fr formResponse
+	err = json.Unmarshal(body, &fr)
+	if err != nil {
+		t.Fatalf("Could not decode form response JSON: %s", err)
+	}
+	// we expect Valid to be true and BadFields to be nil/empty
+	if fr.Valid != true {
+		t.Fatalf("Expected Valid to be %t but got %t.", true, fr.Valid)
+	}
+	if fr.BadFields != nil {
+		t.Fatalf("Expected BadFields to be %v but got %v.", nil, fr.BadFields)
 	}
 }
