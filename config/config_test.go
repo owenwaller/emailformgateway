@@ -72,8 +72,14 @@ func TestReadConfigWithEnvVarOverload(t *testing.T) {
 		t.Fatal(err)
 	}
 	ec := newDefaultTestConfig()
-	// set the Auth.Password to teh expected value in the Env Var.
-	ec.Auth.Password = "test_password"
+	// set the Auth.Password to the expected value in the Env Var.
+	envVarPassword := os.Getenv("TEST_PASSWORD")
+	if envVarPassword != "" {
+		// there is a value set, so we need to use that  value as the expected value in the test.
+		ec.Auth.Password = envVarPassword
+		// otherwise we use the value from the config
+	}
+
 	// compare the configs.
 	if err := verifyConfigs(c, ec); err != nil {
 		t.Fatal(err)
