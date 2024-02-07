@@ -221,3 +221,39 @@ func TestServerSendEmail(t *testing.T) {
 		t.Fatalf("Expected BadFields to be %v but got %v.", nil, fr.BadFields)
 	}
 }
+
+func TestCreateFromDataMap(t *testing.T) {
+	fields := make([]Field, 0)
+	// Create the slice of Field, pulling the To address from the env var
+	// createFormData uses golang.org/x/text/cases.Title internally.
+	// as strings.Title is now depreciated.
+	// Title will upper case the first letter of any word, and lowercase every other letter.
+	// So UPPER becomes Upper as opposed to UPPER.
+	fields = append(fields, Field{Name: "lower", Value: "lower"})
+	fields = append(fields, Field{Name: "UPPER", Value: "UPPER"})
+	fields = append(fields, Field{Name: "Title", Value: "Title"})
+	fields = append(fields, Field{Name: "MixedCase", Value: "MixedCase"})
+	// these 4 cases all resolve to an name of "Mixed Case"
+	// only the case will be in the returned map, as the key after Title
+	// is called is "Mixed Case" in all cases.
+	// Inside createFromDataMap this results in duplicate keys with different values.
+	// only the last key is preserved in this case.
+	fields = append(fields, Field{Name: "mixed case", Value: "mixed case"})
+	fields = append(fields, Field{Name: "mixed Case", Value: "mixed Case"})
+	fields = append(fields, Field{Name: "Mixed case", Value: "Mixed case"})
+	fields = append(fields, Field{Name: "Mixed Case", Value: "Mixed Case"})
+	// this is hte expected map
+	em := make(map[string]string)
+	em["Lower"] = "lower"
+	em["Upper"] = "UPPER"
+	em["Title"] = "Title"
+	em["Mixedcase"] = "MixedCase"
+	em["Mixed Case"] = "Mixed Case"
+
+	m := createFormDataMap(fields)
+	for k, v := range m {
+		if em[k] != m[k] {
+			t.Fatalf("Value: %s, Mismatch at Expected: em[%s](%s) Got: m[%s}(%s)]", v, k, em[k], k, m[k])
+		}
+	}
+}

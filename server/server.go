@@ -18,6 +18,8 @@ import (
 	"github.com/owenwaller/emailformgateway/validation"
 	"github.com/rs/cors"
 	"github.com/spf13/viper"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type Field struct {
@@ -201,10 +203,11 @@ func writeResponse(w http.ResponseWriter, fr *formResponse) {
 
 func createFormDataMap(formFields []Field) map[string]string {
 	// now print the fields
+	titler := cases.Title(language.English)
 	var m map[string]string
 	m = make(map[string]string)
 	for _, v := range formFields {
-		m[strings.Title(v.Name)] = v.Value
+		m[titler.String(v.Name)] = v.Value
 	}
 	return m
 }
