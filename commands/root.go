@@ -2,10 +2,7 @@ package commands
 
 import (
 	//"fmt"
-	"os"
 
-	"github.com/owenwaller/emailformgateway/config"
-	conf "github.com/owenwaller/emailformgateway/config"
 	"github.com/owenwaller/emailformgateway/server"
 	"github.com/spf13/cobra"
 )
@@ -20,27 +17,20 @@ var RootCmd = &cobra.Command{
 }
 
 var configFilename string
+var host string
+var port string
+var route string
 
 func init() {
 	// set up the flags
-	RootCmd.PersistentFlags().StringVarP(&configFilename, "config", "c", "", "Help for config flag")
+	RootCmd.PersistentFlags().StringVarP(&configFilename, "config", "c", "", "The name of the configuration file to use, minus the TOML extension")
+	RootCmd.PersistentFlags().StringVarP(&host, "host", "h", "localhost", "The hostname of the gateway server")
+	RootCmd.PersistentFlags().StringVarP(&port, "port", "p", "9301", "The port the gateway server listens on")
+	RootCmd.PersistentFlags().StringVarP(&route, "route", "r", "/", "The URL path that the form data is POSTed to")
+
 }
 
 func rootCmd(cmd *cobra.Command, args []string) {
-	//fmt.Printf("Config value = \"%s\"\n", configFilename)
-	// err := conf.ReadConfig(configFilename, conf.GetConfig())
-	// if err != nil {
-	// 	//fmt.Printf("%v\n", err)
-	// 	os.Exit(-1)
-	// }
-
-	//configFileName := DefaultConfigFilename
-	c, err := config.ReadConfig(configFilename)
-	if err != nil {
-		os.Exit(-1)
-	}
-
-	// set up templates
-	conf.SetUpTemplates()
-	server.Start(c)
+	s := server.NewServer(host, port, route)
+	s.Start(configFilename)
 }

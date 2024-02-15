@@ -7,10 +7,10 @@ import (
 	"io"
 	"log"
 	"os"
+	"sync"
 
 	"net"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/owenwaller/emailformgateway/config"
@@ -32,19 +32,48 @@ type formResponse struct {
 	BadFields []string
 }
 
-func Start(c *config.Config) {
-	//fmt.Println("Creating new serve mux")
-	mux := http.NewServeMux()
-	mux.HandleFunc(c.Server.Path, gatewayHandler)
-
-	corsMux := cors.Default().Handler(mux)
-	//fmt.Printf("Registering %s => errorHandler\n", c.Server.Path)
-	//fmt.Println("Listening on localhost:1314")
-	host := c.Server.Host + ":" + strconv.Itoa(c.Server.Port)
-	http.ListenAndServe(host, corsMux)
+type Server struct {
+	mu         sync.Mutex
+	configName string
+	mux        *http.ServeMux
+	corsMux    http.Handler
+	host       string
 }
 
-func gatewayHandler(w http.ResponseWriter, r *http.Request) {
+func NewServer(host, port, route string) *Server {
+	s := new(Server)
+	s.mux = http.NewServeMux()
+	s.mux.HandleFunc(route, s.gatewayHandler)
+	s.corsMux = cors.Default().Handler(s.mux)
+	s.host = host + ":" + port
+	return s
+}
+
+func (s *Server) setConfigName(configName string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.configName = configName
+}
+
+func (s *Server) getConfigName() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.configName
+}
+
+func (s *Server) Start(configFileName string) {
+	// check that the config file exists
+	_, err := config.ReadConfig(configFileName) // if configFileName is an empty string the default name "config" will be used.
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Could not find a config file called %q: %s\n", configFileName, err)
+		os.Exit(-1)
+	}
+	// set the filename in the Server - this will be referenced by multiple Go routines so must be synchronised
+	s.setConfigName(configFileName)
+	http.ListenAndServe(s.host, s.corsMux)
+}
+
+func (s *Server) gatewayHandler(w http.ResponseWriter, r *http.Request) {
 	// The web form sends a JSON array of key value encoded pairs like this:
 	// [
 	// 	{
@@ -85,23 +114,7 @@ func gatewayHandler(w http.ResponseWriter, r *http.Request) {
 	// This isn't very RESTful, but it is the way it works ATM
 	writeResponse(w, &fr)
 
-	// now try to send the email, the client already has the correct response.
-	// use a viper env var binding to set the System To address and the templates directory
-	err = viper.BindEnv("Addresses.SystemTo", "TEST_SYSTEM_TO_EMAIL_ADDRESS")
-	if err != nil {
-		log.Fatalf("Could not bind to TEST_SYSTEM_TO_EMAIL_ADDRESS env var. Error: %s", err)
-	}
-	err = viper.BindEnv("Templates.Dir", "TEST_TEMPLATES_DIR")
-	if err != nil {
-		log.Fatalf("Could not bind to TEST_TEMPLATES_DIR env var. Error: %s", err)
-	}
-
-	// now read the config file
-	var filename = os.Getenv("TEST_CONFIG_FILE")
-	if filename == "" {
-		log.Fatalf("Required environmental variable \"TEST_CONFIG_FILE\" not set.\nIt should be the absolute path of the config file.")
-	}
-	c, err := config.ReadConfig(filename)
+	c, err := config.ReadConfig(s.getConfigName())
 	if err != nil {
 		log.Fatal(err)
 	}

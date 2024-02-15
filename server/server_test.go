@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/spf13/viper"
 )
 
 func TestFormResponse(t *testing.T) {
@@ -187,7 +189,28 @@ func TestServerSendEmail(t *testing.T) {
 	b, err := json.Marshal(fields)
 	jsonReader := bytes.NewReader(b)
 	// create the server
-	s := httptest.NewServer(http.HandlerFunc(gatewayHandler))
+	srvUnderTest := NewServer("host", "123", "/")
+
+	// now try to send the email, the client already has the correct response.
+	// use a viper env var binding to set the System To address and the templates directory
+	err = viper.BindEnv("Addresses.SystemTo", "TEST_SYSTEM_TO_EMAIL_ADDRESS")
+	if err != nil {
+		t.Fatalf("Could not bind to TEST_SYSTEM_TO_EMAIL_ADDRESS env var. Error: %s", err)
+	}
+	err = viper.BindEnv("Templates.Dir", "TEST_TEMPLATES_DIR")
+	if err != nil {
+		t.Fatalf("Could not bind to TEST_TEMPLATES_DIR env var. Error: %s", err)
+	}
+
+	// now read the config file
+	var filename = os.Getenv("TEST_CONFIG_FILE")
+	if filename == "" {
+		t.Fatalf("Required environmental variable \"TEST_CONFIG_FILE\" not set.\nIt should be the absolute path of the config file.")
+	}
+	// set the filename in server
+	srvUnderTest.setConfigName(filename)
+	// now create a test server around the handler
+	s := httptest.NewServer(http.HandlerFunc(srvUnderTest.gatewayHandler))
 	defer s.Close()
 
 	// use the default http client to POST to the server
