@@ -8,7 +8,6 @@ import (
 )
 
 type Config struct {
-	Server    ServerData
 	LogFile   LogFileData
 	Smtp      SmtpData
 	Auth      AuthData
@@ -16,12 +15,6 @@ type Config struct {
 	Subjects  EmailSubjectData
 	Templates EmailTemplatesData
 	Fields    map[string]FieldData
-}
-
-type ServerData struct {
-	Host string
-	Path string
-	Port int
 }
 
 type LogFileData struct {

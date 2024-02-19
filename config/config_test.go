@@ -89,10 +89,6 @@ func TestReadConfigWithEnvVarOverload(t *testing.T) {
 func newDefaultTestConfig() *Config {
 	ec := new(Config)
 
-	ec.Server.Host = "localhost"
-	ec.Server.Path = "/"
-	ec.Server.Port = 1314
-
 	ec.LogFile.Filename = "access.log"
 	ec.LogFile.Path = "/var/log/emailformgateway"
 	ec.LogFile.Level = "INFO"
@@ -132,9 +128,6 @@ func newDefaultTestConfig() *Config {
 }
 
 func verifyConfigs(c, ec *Config) error {
-	if c.Server != ec.Server {
-		return fmt.Errorf("Server\nGot\n%+v\nExpected\n%+v\n", c.Server, ec.Server)
-	}
 	if c.LogFile != ec.LogFile {
 		return fmt.Errorf("Logfile\nGot\n%+v\nExpected\n%+v\n", c.LogFile, ec.LogFile)
 	}

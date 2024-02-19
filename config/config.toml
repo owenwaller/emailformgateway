@@ -1,9 +1,4 @@
 # TOML config for the emailformgateway
-[Server]
-Host = "localhost"
-Path = "/"
-Port = 1314
-
 [LogFile]
 Filename = "access.log"
 Path = "/var/log/emailformgateway"
