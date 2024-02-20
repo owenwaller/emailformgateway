@@ -14,7 +14,7 @@ var RootCmd = &cobra.Command{
 	Long: `Longer description..
             feel free to use a few lines here.
             `,
-	Run: rootCmd,
+	RunE: rootCmd, // function t oRun but returns an error
 }
 
 var configFilename string
@@ -31,7 +31,11 @@ func init() {
 
 }
 
-func rootCmd(cmd *cobra.Command, args []string) {
-	s := server.NewServer(host, port, route)
-	s.Start(configFilename)
+func rootCmd(cmd *cobra.Command, args []string) error {
+	s := server.NewServer(host, port)
+	s.SetRouteHandler(route)
+	if err := s.ReadConfig(configFilename); err != nil {
+		return err
+	}
+	return s.Start()
 }

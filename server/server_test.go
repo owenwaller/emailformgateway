@@ -190,7 +190,7 @@ func TestServerSendEmail(t *testing.T) {
 	b, err := json.Marshal(fields)
 	jsonReader := bytes.NewReader(b)
 	// create the server
-	srvUnderTest := NewServer("host", "123", "/")
+	srvUnderTest := NewServer("host", "123")
 
 	// now try to send the email, the client already has the correct response.
 	// use a viper env var binding to set the System To address and the templates directory
@@ -209,8 +209,8 @@ func TestServerSendEmail(t *testing.T) {
 		t.Fatalf("Required environmental variable \"TEST_CONFIG_FILE\" not set.\nIt should be the absolute path of the config file.")
 	}
 	// set the filename in server
-	srvUnderTest.setConfigName(filename)
-	// now create a test server around the handler
+	srvUnderTest.ReadConfig(filename)
+	// now create a test server around the handler - we don't need to set a route as we call the handler directly
 	s := httptest.NewServer(http.HandlerFunc(srvUnderTest.gatewayHandler))
 	defer s.Close()
 
