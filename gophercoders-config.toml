@@ -1,0 +1,49 @@
+# Copyright (c) 2024 Owen Waller. All rights reserved.
+# TOML config for the emailformgateway
+[LogFile]
+Filename = "access.log"
+Path = "/tmp/emailformgateway"
+Level = "INFO"
+
+[Smtp]
+Host = "owenvm"
+Port = 25
+
+[Auth]
+Username = ""
+Password = ""
+
+[Addresses]
+CustomerFrom = "do-not-reply@gophercoders.com"
+CustomerFromName = "GopherCoders.com Feedback Form"
+CustomerReplyTo = "do-not-reply@gophercoders.com"
+SystemTo = "redacted@redacted.com"
+SystemToName = "GopherCoders.com Feedback Form"
+SystemFrom = "do-not-reply@gophercoders.com"
+SystemFromName = "GoopherCoders Feedback Form"
+SystemReplyTo = "do-not-reply@gophercoders.com"
+
+[Subjects]
+Customer = "Thank you for contacting Gophers!"
+System = "GopherCoders Feedback Form Message:"
+
+[Templates]
+Dir = "."
+CustomerText = "customer-email-text.template"
+CustomerHtml = "customer-email-html.template"
+SystemText = "system-email-text.template"
+SystemHtml = "system-email-html.template"
+
+[Fields]
+    [Fields.Field1]
+    Name="name"
+    Type="textRestricted"
+    [Fields.Field2]
+    Name="email"
+    Type="email"
+    [Fields.Field3]
+    Name="subject"
+    Type="textrestricted"
+    [Fields.Field4]
+    Name="feedback"
+    Type="textunrestricted"
