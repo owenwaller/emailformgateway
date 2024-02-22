@@ -63,13 +63,13 @@ jobs:
 
       - name: Copy files to server
         run: |
-          scp ./test_envs.sh ./emailer.test ./*.template ./gophercoders-config.toml ./$TEST_CONFIG_FILE.toml gophercoders.com:
+          scp ./test_envs.sh ./emailer.test ./*.template ./gophercoders-config.toml $TEST_CONFIG_FILE.toml gophercoders.com:
         env:
            TEST_CONFIG_FILE: ${{ secrets.TEST_CONFIG_FILE }}
     
       - name: Run emailer.test test
         run: |
-          ssh gophercoders.com -c "source ./test_envs.sh; TEST_TEMPLATES_DIR=$PWD TEST_DOMAIN=gophercoders.com ./emailer.test"
+          ssh gophercoders.com "source ./test_envs.sh; TEST_TEMPLATES_DIR=$PWD TEST_DOMAIN=gophercoders.com ./emailer.test"
 
       - name: Delete ssh dir
         if: ${{ always() }}
