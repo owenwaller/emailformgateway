@@ -69,7 +69,7 @@ jobs:
     
       - name: Run emailer.test test
         run: |
-          ssh gophercoders.com "source ./test_envs.sh; TEST_TEMPLATES_DIR=$PWD TEST_DOMAIN=gophercoders.com ./emailer.test"
+          ssh gophercoders.com 'source ./test_envs.sh; TEST_TEMPLATES_DIR=$PWD TEST_DOMAIN=gophercoders.com ./emailer.test'
 
       - name: Delete ssh dir
         if: ${{ always() }}
