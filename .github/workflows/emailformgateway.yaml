@@ -16,3 +16,12 @@ jobs:
       
       - name: Print Go version
         run: go version
+
+      - name: Run tests
+        run: CGO_ENABLED=0 go test -skip=SendEmail github.com/owenwaller/emailformgateway/...
+
+      - name: Build emailer test
+        run: CGO_ENABLED=0 go test -c -o ./emailer.test -run=SendEmail github.com/owenwaller/emailformgateway/...
+
+      - name: Listing
+        run: 'ls -al'
