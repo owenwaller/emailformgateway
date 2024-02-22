@@ -21,7 +21,7 @@ jobs:
         run: CGO_ENABLED=0 go test -skip=SendEmail github.com/owenwaller/emailformgateway/...
 
       - name: Build emailer test
-        run: CGO_ENABLED=0 go test -c -o ./emailer.test -run=SendEmail github.com/owenwaller/emailformgateway/...
+        run: CGO_ENABLED=0 go test -c -o ./emailer.test -run=SendEmail github.com/owenwaller/emailformgateway/emailer
 
       - name: Listing
         run: 'ls -al'
