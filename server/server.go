@@ -35,12 +35,14 @@ type Server struct {
 	config  *config.Config
 	mux     *http.ServeMux
 	corsMux http.Handler
+	domain  string
 	host    string
 }
 
-func NewServer(host, port string) *Server {
+func NewServer(host, port, domain string) *Server {
 	s := new(Server)
 	s.host = host + ":" + port
+	s.domain = domain
 	return s
 }
 
@@ -133,7 +135,7 @@ func (s *Server) gatewayHandler(w http.ResponseWriter, r *http.Request) {
 	etd.XForwardedFor = xForwardedFor
 
 	// try to send the email
-	err = emailer.SendEmail(etd, s.config.Smtp, s.config.Auth, s.config.Addresses, s.config.Subjects, s.config.Templates)
+	err = emailer.SendEmail(etd, s.config.Smtp, s.config.Auth, s.config.Addresses, s.config.Subjects, s.config.Templates, s.domain)
 	if err != nil {
 		log.Fatalf("Failed to send email; %s", err)
 	}

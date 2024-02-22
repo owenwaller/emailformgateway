@@ -129,8 +129,13 @@ func TestSendEmail(t *testing.T) {
 	c.Subjects.Customer = fmt.Sprintf("%s %s", formatted, c.Subjects.Customer)
 	c.Subjects.System = fmt.Sprintf("%s %s", formatted, c.Subjects.System)
 
+	domain, ok := os.LookupEnv("TEST_DOMAIN")
+	if !ok {
+		t.Fatalf("The environmental TEST_DOMAIN is undefined.")
+	}
+
 	err = SendEmail(td, c.Smtp, c.Auth, c.Addresses,
-		c.Subjects, c.Templates)
+		c.Subjects, c.Templates, domain)
 	if err != nil {
 		t.Fatalf("unexpected error sending email %v\n", err)
 	}

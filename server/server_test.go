@@ -189,8 +189,14 @@ func TestServerSendEmail(t *testing.T) {
 	// now encode the slice as JSON, as the Client side javascript does.
 	b, err := json.Marshal(fields)
 	jsonReader := bytes.NewReader(b)
+
+	domain, ok := os.LookupEnv("TEST_DOMAIN")
+	if !ok {
+		t.Fatalf("The environmental TEST_DOMAIN is undefined.")
+	}
+
 	// create the server
-	srvUnderTest := NewServer("host", "123")
+	srvUnderTest := NewServer("host", "123", domain)
 
 	// now try to send the email, the client already has the correct response.
 	// use a viper env var binding to set the System To address and the templates directory

@@ -21,6 +21,7 @@ var configFilename string
 var host string
 var port string
 var route string
+var domain string
 
 func init() {
 	// set up the flags
@@ -28,11 +29,12 @@ func init() {
 	RootCmd.PersistentFlags().StringVarP(&host, "host", "h", "localhost", "The hostname of the gateway server")
 	RootCmd.PersistentFlags().StringVarP(&port, "port", "p", "9301", "The port the gateway server listens on")
 	RootCmd.PersistentFlags().StringVarP(&route, "route", "r", "/", "The URL path that the form data is POSTed to")
+	RootCmd.PersistentFlags().StringVarP(&domain, "domain", "d", "example.com", "The domain the email form gateway receives form data from")
 
 }
 
 func rootCmd(cmd *cobra.Command, args []string) error {
-	s := server.NewServer(host, port)
+	s := server.NewServer(host, port, domain)
 	s.SetRouteHandler(route)
 	if err := s.ReadConfig(configFilename); err != nil {
 		return err

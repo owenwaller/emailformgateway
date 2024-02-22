@@ -34,15 +34,15 @@ func populateTemplate(td config.EmailTemplateData, t string) (string, error) {
 }
 
 func SendEmail(etd config.EmailTemplateData, smtpData config.SmtpData, authData config.AuthData, addr config.EmailAddressData,
-	subject config.EmailSubjectData, templatesData config.EmailTemplatesData) error {
+	subject config.EmailSubjectData, templatesData config.EmailTemplatesData, domain string) error {
 
 	// write the email we want to send into the customerEmail bytes.Buffer or fail.
-	customerEmail, err := newCustomerEmail(etd, addr, subject, templatesData)
+	customerEmail, err := newCustomerEmail(etd, addr, subject, templatesData, domain)
 	if err != nil {
 		return err
 	}
 
-	systemEmail, err := newSystemEmail(etd, addr, subject, templatesData)
+	systemEmail, err := newSystemEmail(etd, addr, subject, templatesData, domain)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func sendSystemEmail(etd config.EmailTemplateData, smtpData config.SmtpData, aut
 }
 
 func newCustomerEmail(etd config.EmailTemplateData, addr config.EmailAddressData,
-	subject config.EmailSubjectData, templatesData config.EmailTemplatesData) (bytes.Buffer, error) {
+	subject config.EmailSubjectData, templatesData config.EmailTemplatesData, domain string) (bytes.Buffer, error) {
 	// now create the templates
 	ctt := template.Must(template.ParseFiles(templatesData.CustomerTextFileName))
 	cht := template.Must(template.ParseFiles(templatesData.CustomerHtmlFileName))
@@ -143,7 +143,7 @@ func newCustomerEmail(etd config.EmailTemplateData, addr config.EmailAddressData
 	h.SetAddressList("To", to)
 	h.SetAddressList("Reply-To", replyTo)
 	h.SetSubject(subject.Customer)
-	err = h.GenerateMessageIDWithHostname("gophercoders.com") // we need to pass the domain name in somehow.... or do some sort of DNS query??
+	err = h.GenerateMessageIDWithHostname(domain)
 	if err != nil {
 		return bytes.Buffer{}, err
 	}
@@ -196,7 +196,7 @@ func newCustomerEmail(etd config.EmailTemplateData, addr config.EmailAddressData
 }
 
 func newSystemEmail(etd config.EmailTemplateData, addr config.EmailAddressData,
-	subject config.EmailSubjectData, templatesData config.EmailTemplatesData) (bytes.Buffer, error) {
+	subject config.EmailSubjectData, templatesData config.EmailTemplatesData, domain string) (bytes.Buffer, error) {
 	// now create the templates
 	stt := template.Must(template.ParseFiles(templatesData.SystemTextFileName))
 	sht := template.Must(template.ParseFiles(templatesData.SystemHtmlFileName))
@@ -223,7 +223,7 @@ func newSystemEmail(etd config.EmailTemplateData, addr config.EmailAddressData,
 	h.SetAddressList("To", to)
 	h.SetAddressList("Reply-To", replyTo)
 	h.SetSubject(subject.System)
-	err = h.GenerateMessageIDWithHostname("gophercoders.com") // we need to pass the domain name in somehow.... or do some sort of DNS query??
+	err = h.GenerateMessageIDWithHostname(domain)
 	if err != nil {
 		return bytes.Buffer{}, err
 	}
