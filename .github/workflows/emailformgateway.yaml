@@ -25,3 +25,31 @@ jobs:
 
       - name: Listing
         run: 'ls -al'
+
+        - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/gophercoders.key
+          chmod 600 ~/.ssh/gophercoders.key
+          cat >>~/.ssh/config <<END
+          Host gophercoders.com
+            HostName $SSH_HOST
+            User $SSH_USER
+            Port $SSH_PORT
+            IdentityFile ~/.ssh/gophercoders.key
+            StrictHostKeyChecking no
+            ProxyCommand openssl s_client -quiet -connect senpaid.com:$SSH_PORT -servername www.gophercoders.com
+          END
+        env:
+          SSH_KEY: ${{ secrets.SENPAID_SERVER_SSH_KEY }}
+          SSH_USER: ${{ secrets.SENPAID_SERVER_USERNAME }}
+          SSH_HOST: ${{ secrets.SENPAID_SERVER_HOSTNAME }}
+          SSH_PORT: ${{ secrets.SENPAID_SERVER_PORT }}
+
+      - name: List public dir
+        run: ssh gophercoders.com 'whoami; ls -l ~/'
+
+      - name: Delete ssh dir
+        if: ${{ always() }}
+        run: |
+          rm -rf ~/.ssh
