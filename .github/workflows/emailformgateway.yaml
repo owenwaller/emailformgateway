@@ -1,3 +1,4 @@
+# Copyright (c) 2024 Owen Waller. All rights reserved.
 name: Email_Form_Gateway_Build_Test_And_Deploy
 on: [push, pull_request]
 jobs:
@@ -27,7 +28,7 @@ jobs:
         run: CGO_ENABLED=0 go test -c -o ./server.test -run=SendEmail github.com/owenwaller/emailformgateway/server
 
       - name: Build emailformgateway server
-        run: go build -o ./emailformgateway ./cmd/main.go
+        run: CGO_ENABLED=0 go build -o ./emailformgateway ./cmd/main.go
 
       - name: Listing
         run: 'ls -al'
