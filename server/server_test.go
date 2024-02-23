@@ -180,9 +180,9 @@ func TestServerSendEmail(t *testing.T) {
 	fields = append(fields, Field{Name: "subject", Value: "The subject"})
 	fields = append(fields, Field{Name: "feedback", Value: "The feedback"})
 
-	var to = os.Getenv("TEST_CUSTOMER_TO_EMAIL")
+	var to = os.Getenv("TEST_CUSTOMER_TO_EMAIL_ADDRESS")
 	if to == "" {
-		t.Fatalf("Required environmental variable \"TEST_CUSTOMER_TO_EMAIL\" not set.")
+		t.Fatalf("Required environmental variable \"TEST_CUSTOMER_TO_EMAIL_ADDRESS\" not set.")
 	}
 	fields = append(fields, Field{Name: "email", Value: to})
 
