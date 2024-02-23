@@ -30,7 +30,8 @@ func init() {
 	RootCmd.PersistentFlags().StringVarP(&port, "port", "p", "9301", "The port the gateway server listens on")
 	RootCmd.PersistentFlags().StringVarP(&route, "route", "r", "/", "The URL path that the form data is POSTed to")
 	RootCmd.PersistentFlags().StringVarP(&domain, "domain", "d", "example.com", "The domain the email form gateway receives form data from")
-
+	// Remove the default -h help shorthand as we want this for hostname as above.
+	RootCmd.PersistentFlags().BoolP("help", "", false, "help for this command")
 }
 
 func rootCmd(cmd *cobra.Command, args []string) error {
