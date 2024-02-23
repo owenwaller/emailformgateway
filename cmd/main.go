@@ -1,3 +1,5 @@
+// Copyright (c) 2024 Owen Waller. All rights reserved.
+
 package main
 
 import (

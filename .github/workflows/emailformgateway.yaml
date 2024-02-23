@@ -26,6 +26,9 @@ jobs:
       - name: Build server test
         run: CGO_ENABLED=0 go test -c -o ./server.test -run=SendEmail github.com/owenwaller/emailformgateway/server
 
+      - nane: Build emailformgateway server
+        run: go build -o ./emailformgateway ./cmd/main.go
+
       - name: Listing
         run: 'ls -al'
 
@@ -66,7 +69,7 @@ jobs:
 
       - name: Copy files to server
         run: |
-          scp ./test_envs.sh ./emailer.test ./server.test ./*.template ./gophercoders-config.toml $TEST_CONFIG_FILE.toml gophercoders.com:
+          scp ./emailformgateway ./test_envs.sh ./emailer.test ./server.test ./*.template ./gophercoders-config.toml $TEST_CONFIG_FILE.toml gophercoders.com:
         env:
            TEST_CONFIG_FILE: ${{ secrets.TEST_CONFIG_FILE }}
     
