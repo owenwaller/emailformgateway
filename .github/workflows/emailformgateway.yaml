@@ -26,7 +26,7 @@ jobs:
       - name: Build server test
         run: CGO_ENABLED=0 go test -c -o ./server.test -run=SendEmail github.com/owenwaller/emailformgateway/server
 
-      - nane: Build emailformgateway server
+      - name: Build emailformgateway server
         run: go build -o ./emailformgateway ./cmd/main.go
 
       - name: Listing
