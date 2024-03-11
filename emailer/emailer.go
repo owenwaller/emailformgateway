@@ -61,8 +61,6 @@ func SendEmail(etd config.EmailTemplateData, smtpData config.SmtpData, authData 
 
 func sendCustomerEmail(etd config.EmailTemplateData, smtpData config.SmtpData, authData config.AuthData, addr config.EmailAddressData, email []byte) error {
 
-	// for the minute...duplicate creating the to and from addresses here (also in newCustomerEmail)
-	from := []*mail.Address{{addr.CustomerFromName, addr.CustomerFrom}}
 	to := []*mail.Address{{etd.FormData["Name"], etd.FormData["Email"]}}
 
 	toStrs := make([]string, 0)
@@ -75,10 +73,10 @@ func sendCustomerEmail(etd config.EmailTemplateData, smtpData config.SmtpData, a
 	//	do we need auth for this server?
 	if authData.Password != "" && authData.Username != "" {
 		clientAuth := sasl.NewPlainClient("", authData.Username, authData.Password)
-		err = smtp.SendMail(hostname, clientAuth, from[0].String(), toStrs, bytes.NewReader(email))
+		err = smtp.SendMailTLS(hostname, clientAuth, addr.CustomerFrom, toStrs, bytes.NewReader(email)) // the Krystal SMTP hosts NEED TLS from the get go
 	} else {
 		// no auth version
-		err = smtp.SendMail(hostname, nil, from[0].String(), toStrs, bytes.NewReader(email))
+		err = smtp.SendMail(hostname, nil, addr.CustomerFrom, toStrs, bytes.NewReader(email))
 	}
 	if err != nil {
 		return fmt.Errorf("Error sending customer email: %w", err)
@@ -88,8 +86,6 @@ func sendCustomerEmail(etd config.EmailTemplateData, smtpData config.SmtpData, a
 
 func sendSystemEmail(etd config.EmailTemplateData, smtpData config.SmtpData, authData config.AuthData, addr config.EmailAddressData, email []byte) error {
 
-	// for the minute...duplicate creating the to and from addresses here (also in newSystemEmail)
-	from := []*mail.Address{{addr.SystemFromName, addr.SystemFrom}}
 	to := []*mail.Address{{addr.SystemToName, addr.SystemTo}}
 
 	toStrs := make([]string, 0)
@@ -102,13 +98,13 @@ func sendSystemEmail(etd config.EmailTemplateData, smtpData config.SmtpData, aut
 	//	do we need auth for this server?
 	if authData.Password != "" && authData.Username != "" {
 		clientAuth := sasl.NewPlainClient("", authData.Username, authData.Password)
-		err = smtp.SendMail(hostname, clientAuth, from[0].Address, toStrs, bytes.NewReader(email))
+		err = smtp.SendMailTLS(hostname, clientAuth, addr.SystemFrom, toStrs, bytes.NewReader(email))
 	} else {
 		// no auth version
-		err = smtp.SendMail(hostname, nil, from[0].Address, toStrs, bytes.NewReader(email))
+		err = smtp.SendMail(hostname, nil, addr.SystemFrom, toStrs, bytes.NewReader(email))
 	}
 	if err != nil {
-		log.Printf("From: %qn", from[0].Address)
+		log.Printf("From: %qn", addr.SystemFrom)
 		log.Printf("To: %v\n", toStrs)
 		return fmt.Errorf("Error sending system email: %w", err)
 	}
