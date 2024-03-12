@@ -209,6 +209,26 @@ func TestServerSendEmail(t *testing.T) {
 		t.Fatalf("Could not bind to TEST_TEMPLATES_DIR env var. Error: %s", err)
 	}
 
+	// we need to bind the SMTP details - so we can change host
+	err = viper.BindEnv("Smtp.Host", "TEST_SMTP_HOST")
+	if err != nil {
+		t.Fatalf("Could not bind to TEST_SMTP_HOST env var. Error: %s", err)
+	}
+	err = viper.BindEnv("Smtp.Port", "TEST_SMTP_PORT")
+	if err != nil {
+		t.Fatalf("Could not bind to TEST_SMTP_PORT env var. Error: %s", err)
+	}
+
+	// we need to bind the Auth details - so we can supply the auth to the changed host
+	err = viper.BindEnv("Auth.Username", "TEST_AUTH_USERNAME")
+	if err != nil {
+		t.Fatalf("Could not bind to TEST_AUTH_USERNAME env var. Error: %s", err)
+	}
+	err = viper.BindEnv("Auth.Password", "TEST_AUTH_PASSWORD")
+	if err != nil {
+		t.Fatalf("Could not bind to TEST_AUTH_PASSWORD env var. Error: %s", err)
+	}
+
 	// now read the config file
 	var filename = os.Getenv("TEST_CONFIG_FILE")
 	if filename == "" {
