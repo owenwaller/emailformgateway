@@ -19,16 +19,16 @@ jobs:
         run: go version
 
       - name: Run tests
-        run: CGO_ENABLED=0 go test -skip=SendEmail github.com/owenwaller/emailformgateway/...
+        run: go test -skip=SendEmail github.com/owenwaller/emailformgateway/...
 
       - name: Build emailer test
-        run: CGO_ENABLED=0 go test -c -o ./emailer.test -run=SendEmail github.com/owenwaller/emailformgateway/emailer
+        run: go test -c -o ./emailer.test -run=SendEmail github.com/owenwaller/emailformgateway/emailer
 
       - name: Build server test
-        run: CGO_ENABLED=0 go test -c -o ./server.test -run=SendEmail github.com/owenwaller/emailformgateway/server
+        run: go test -c -o ./server.test -run=SendEmail github.com/owenwaller/emailformgateway/server
 
       - name: Build emailformgateway server
-        run: CGO_ENABLED=0 go build -o ./emailformgateway ./cmd/main.go
+        run: go build -o ./emailformgateway ./cmd/main.go
 
       - name: Listing
         run: 'ls -al'
@@ -48,10 +48,10 @@ jobs:
             ProxyCommand openssl s_client -quiet -connect senpaid.com:$SSH_PORT -servername www.gophercoders.com
           END
         env:
-          SSH_KEY: ${{ secrets.SENPAID_SERVER_SSH_KEY }}
-          SSH_USER: ${{ secrets.SENPAID_SERVER_USERNAME }}
-          SSH_HOST: ${{ secrets.SENPAID_SERVER_HOSTNAME }}
-          SSH_PORT: ${{ secrets.SENPAID_SERVER_PORT }}
+          SSH_KEY: ${{ secrets.GOPHERCODERS_SERVER_SSH_KEY }}
+          SSH_USER: ${{ secrets.GOPHERCODERS_SERVER_USERNAME }}
+          SSH_HOST: ${{ secrets.GOPHERCODERS_SERVER_HOSTNAME }}
+          SSH_PORT: ${{ secrets.GOPHERCODERS_SERVER_PORT }}
 
       - name: List public dir
         run: ssh gophercoders.com 'whoami; ls -l ~/'
@@ -62,11 +62,19 @@ jobs:
           export TEST_CUSTOMER_TO_EMAIL_ADDRESS=$TEST_CUSTOMER_TO_EMAIL_ADDRESS
           export TEST_SYSTEM_TO_EMAIL_ADDRESS=$TEST_SYSTEM_TO_EMAIL_ADDRESS
           export TEST_CONFIG_FILE=$TEST_CONFIG_FILE
+          export TEST_SMTP_HOST=$TEST_SMTP_HOST
+          export TEST_SMTP_PORT=$TEST_SMTP_PORT
+          export TEST_AUTH_USERNAME=$TEST_AUTH_USERNAME
+          export TEST_AUTH_PASSWORD=$TEST_AUTH_PASSWORD
           END
         env:
           TEST_CUSTOMER_TO_EMAIL_ADDRESS: ${{ secrets.TEST_CUSTOMER_TO_EMAIL_ADDRESS }}
           TEST_SYSTEM_TO_EMAIL_ADDRESS: ${{ secrets.TEST_SYSTEM_TO_EMAIL_ADDRESS }}
           TEST_CONFIG_FILE: ${{ secrets.TEST_CONFIG_FILE }}
+          TEST_SMTP_HOST: ${{ secrets.TEST_SMTP_HOST }}
+          TEST_SMTP_PORT: ${{ secrets.TEST_SMTP_PORT }}
+          TEST_AUTH_USERNAME: ${{ secrets.TEST_AUTH_USERNAME }}
+          TEST_AUTH_PASSWORD: ${{ secrets.TEST_AUTH_PASSWORD }}
 
       - name: Copy files to server
         run: |
