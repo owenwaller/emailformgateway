@@ -45,7 +45,6 @@ jobs:
             Port $SSH_PORT
             IdentityFile ~/.ssh/gophercoders.key
             StrictHostKeyChecking no
-            ProxyCommand openssl s_client -quiet -connect senpaid.com:$SSH_PORT -servername www.gophercoders.com
           END
         env:
           SSH_KEY: ${{ secrets.GOPHERCODERS_SERVER_SSH_KEY }}
