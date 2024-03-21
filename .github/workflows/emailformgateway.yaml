@@ -100,7 +100,7 @@ jobs:
 
       - name: Remove emailformgateway directory from server
         if: ${{ always() }}
-        run: ssh gophercoders.com 'sudo 'rm -rf emailformgateway'
+        run: ssh gophercoders.com 'sudo rm -rf emailformgateway'
 
       - name: Restart emailformgateway service
         if: ${{ always() }}
