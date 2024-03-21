@@ -75,9 +75,11 @@ jobs:
           TEST_AUTH_USERNAME: ${{ secrets.TEST_AUTH_USERNAME }}
           TEST_AUTH_PASSWORD: ${{ secrets.TEST_AUTH_PASSWORD }}
 
+      - name: Create emailformgateway directory on server 
+        run: ssh gophercoders.com 'mkdir -p emailformgateway' # directory is relative to home directory on the server
+
       - name: Copy files to server
         run: |
-          ssh gophercoders.com 'mkdir -p ~/emailformgateway'
           scp ./emailformgateway ./test_envs.sh ./emailer.test ./server.test ./*.template ./gophercoders-config.toml $TEST_CONFIG_FILE.toml gophercoders.com:emailformgateway
         env:
            TEST_CONFIG_FILE: ${{ secrets.TEST_CONFIG_FILE }}
@@ -96,6 +98,9 @@ jobs:
       - name: Copy the emailformgateway binary to /usr/local/bin
         run: ssh gophercoders.com 'sudo /usr/bin/cp ~/emailformgateway/emailformgateway /usr/local/bin' # ASSUMES config is in /etc/emailformgateway. This has to be done externally
 
+      - name: Remove emailformgateway directory from server
+        run: ssh gophercoders.com 'sudo 'rm -rf emailformgateway'
+
       - name: Restart emailformgateway service
         if: ${{ always() }}
         run: ssh gophercoders.com 'sudo /usr/bin/systemctl restart emailfromgateway-gophercoders.service'
@@ -105,4 +110,3 @@ jobs:
         run: |
           rm -rf ~/.ssh
           rm ./test_envs.sh
-          rm -rf ~/emailformgateway
