@@ -77,7 +77,8 @@ jobs:
 
       - name: Copy files to server
         run: |
-          scp ./emailformgateway ./test_envs.sh ./emailer.test ./server.test ./*.template ./gophercoders-config.toml $TEST_CONFIG_FILE.toml gophercoders.com:
+          ssh gophercoders.com 'mkdir -p ~/emailformgateway'
+          scp ./emailformgateway ./test_envs.sh ./emailer.test ./server.test ./*.template ./gophercoders-config.toml $TEST_CONFIG_FILE.toml gophercoders.com:emailformgateway
         env:
            TEST_CONFIG_FILE: ${{ secrets.TEST_CONFIG_FILE }}
     
@@ -89,8 +90,19 @@ jobs:
         run: |
           ssh gophercoders.com 'source ./test_envs.sh; TEST_TEMPLATES_DIR=$PWD TEST_DOMAIN=example.com ./server.test'
 
-      - name: Delete ssh dir
+      - name: Stop emailformgateway service
+        run: ssh gophercoders.com 'sudo /usr/bin/systemctl stop emailfromgateway-gophercoders.service'
+
+      - name: Copy the emailformgateway binary to /usr/local/bin
+        run: ssh gophercoders.com 'sudo /usr/bin/cp ~/emailformgateway/emailformgateway /usr/local/bin' # ASSUMES config is in /etc/emailformgateway. This has to be done externally
+
+      - name: Restart emailformgateway service
+        if: ${{ always() }}
+        run: ssh gophercoders.com 'sudo /usr/bin/systemctl restart emailfromgateway-gophercoders.service'
+
+      - name: Delete dirs
         if: ${{ always() }}
         run: |
           rm -rf ~/.ssh
           rm ./test_envs.sh
+          rm -rf ~/emailformgateway
