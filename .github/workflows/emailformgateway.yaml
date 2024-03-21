@@ -99,6 +99,7 @@ jobs:
         run: ssh gophercoders.com 'sudo /usr/bin/cp ~/emailformgateway/emailformgateway /usr/local/bin' # ASSUMES config is in /etc/emailformgateway. This has to be done externally
 
       - name: Remove emailformgateway directory from server
+        if: ${{ always() }}
         run: ssh gophercoders.com 'sudo 'rm -rf emailformgateway'
 
       - name: Restart emailformgateway service
@@ -109,4 +110,4 @@ jobs:
         if: ${{ always() }}
         run: |
           rm -rf ~/.ssh
-          rm ./test_envs.sh
+          rm ~/test_envs.sh
