@@ -111,4 +111,4 @@ jobs:
         if: ${{ always() }}
         run: |
           rm -rf ~/.ssh
-          rm ~/test_envs.sh
+          rm ./test_envs.sh
