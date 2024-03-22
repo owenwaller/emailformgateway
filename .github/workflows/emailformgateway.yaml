@@ -80,7 +80,8 @@ jobs:
 
       - name: Copy files to server
         run: |
-          scp ./emailformgateway ./test_envs.sh ./emailer.test ./server.test ./*.template ./gophercoders-config.toml $TEST_CONFIG_FILE.toml gophercoders.com:emailformgateway
+          scp ./emailformgateway ./test_envs.sh ./emailer.test ./server.test ./*.template $TEST_CONFIG_FILE.toml gophercoders.com:emailformgateway
+          scp ./gophercoders-config.toml $TEST_CONFIG_FILE.toml gophercoders.com:
         env:
            TEST_CONFIG_FILE: ${{ secrets.TEST_CONFIG_FILE }}
     
