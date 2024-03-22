@@ -110,5 +110,7 @@ jobs:
       - name: Delete dirs
         if: ${{ always() }}
         run: |
+          ls -al
+          pwd
           rm -rf ~/.ssh
           rm ./test_envs.sh
