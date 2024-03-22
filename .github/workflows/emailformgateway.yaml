@@ -87,11 +87,11 @@ jobs:
     
       - name: Run emailer.test test
         run: |
-          ssh gophercoders.com 'source ./emailformgateway/test_envs.sh; TEST_TEMPLATES_DIR=$PWD TEST_DOMAIN=gophercoders.com ./emailformgateway/emailer.test'
+          ssh gophercoders.com 'source ./emailformgateway/test_envs.sh; TEST_TEMPLATES_DIR=$PWD/emailformgateway TEST_DOMAIN=gophercoders.com ./emailformgateway/emailer.test'
 
       - name: Run server.test test
         run: |
-          ssh gophercoders.com 'source ./emailformgateway/test_envs.sh; TEST_TEMPLATES_DIR=$PWD TEST_DOMAIN=example.com ./emailformgateway/server.test'
+          ssh gophercoders.com 'source ./emailformgateway/test_envs.sh; TEST_TEMPLATES_DIR=$PWD/emailformgateway TEST_DOMAIN=example.com ./emailformgateway/server.test'
 
       - name: Stop emailformgateway service
         run: ssh gophercoders.com 'sudo /usr/bin/systemctl stop emailfromgateway-gophercoders.service'
